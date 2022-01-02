@@ -23,7 +23,7 @@ def draw_text(y, font, text, draw, width):
     shadowcolor = (0, 0, 0)
     fillcolor = (255, 255, 255)
     textWidth = font.getsize(text)[0]
-    x = 75
+    x = 365
     for y_p in range(-1, 2):
         for x_p in range(-1, 2):
             draw.text((x + x_p, y + y_p), text, font=font, fill=shadowcolor)
@@ -43,7 +43,7 @@ def make_welcome(pfp: BytesIO, member: discord.Member):
     joinpos = member.guild.member_count
 
     bg = Image.open(WELCOMEBG)  # open the welcome background
-    bg = bg.resize((1024, 600))  # resize
+    bg = bg.resize((1024, 415))  # resize
 
     pfp = Image.open(pfp)  # make the pfp a PIL Image
     pfp = pfp.resize((265, 265))  # make pfp 265x265
@@ -55,10 +55,11 @@ def make_welcome(pfp: BytesIO, member: discord.Member):
 
     # draw all text
     font = ImageFont.truetype("DejaVuSans-Bold.ttf", 60)
-    draw = draw_text(365, font, "Welcome", draw, bg.size[0])
+    draw = draw_text(115, font, "Welcome", draw, bg.size[0])
     font = ImageFont.truetype("DejaVuSans-Bold.ttf", 40)
-    draw = draw_text(435, font, tag, draw, bg.size[0])
-    draw = draw_text(485, font, f"You are our {num_suffix(joinpos)} member", draw, bg.size[0])
+    draw = draw_text(195, font, tag, draw, bg.size[0])
+    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 38)
+    draw = draw_text(250, font, f"You are our {num_suffix(joinpos)} member", draw, bg.size[0])
 
     return bg  # changes are saved to the bg so return that
 
@@ -68,7 +69,7 @@ def make_leave(pfp: BytesIO, member: discord.Member):
     joinpos = member.guild.member_count
 
     bg = Image.open(WELCOMEBG)  # open the welcome background
-    bg = bg.resize((1024, 500))  # resize
+    bg = bg.resize((1024, 425))  # resize
 
     pfp = Image.open(pfp)  # make the pfp a PIL Image
     pfp = pfp.resize((265, 265))  # make pfp 265x265
@@ -81,10 +82,11 @@ def make_leave(pfp: BytesIO, member: discord.Member):
     draw = ImageDraw.Draw(bg)
 
     font = ImageFont.truetype("DejaVuSans-Bold.ttf", 60)
-    draw = draw_text(365, font, "Goodbye", draw, bg.size[0])
+    draw = draw_text(115, font, "Goodbye", draw, bg.size[0])
     font = ImageFont.truetype("DejaVuSans-Bold.ttf", 40)
-    draw = draw_text(435, font, tag, draw, bg.size[0])
-    draw = draw_text(485, font, f"They were our {num_suffix(joinpos)} member", draw, bg.size[0])
+    draw = draw_text(195, font, tag, draw, bg.size[0])
+    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 38)
+    draw = draw_text(250, font, f"They were our {num_suffix(joinpos)} member", draw, bg.size[0])
     # STUFF HERE
 
     return bg  # changes are saved to the bg so return that
