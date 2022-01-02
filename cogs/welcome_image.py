@@ -54,12 +54,13 @@ def make_welcome(pfp: BytesIO, member: discord.Member):
     draw = ImageDraw.Draw(bg)  # Start a draw canvas using the background
 
     # draw all text
-    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 60)
-    draw = draw_text(115, font, "Welcome", draw, bg.size[0])
-    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 40)
-    draw = draw_text(195, font, tag, draw, bg.size[0])
-    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 38)
-    draw = draw_text(250, font, f"You are our {num_suffix(joinpos)} member", draw, bg.size[0])
+    font = ImageFont.truetype("FreeMonoBold.ttf", 60)
+    draw = draw_text(75, font, "Welcome,", draw, bg.size[0])
+    font = ImageFont.truetype("FreeMonoBold.ttf", 40)
+    draw = draw_text(155, font, tag, draw, bg.size[0])
+    draw = draw_text(215, font, f"You are our {num_suffix(joinpos)} member!", draw, bg.size[0])
+    font = ImageFont.truetype("FreeMonoBold.ttf", 60)
+    draw = draw_text(270, font, "_", draw, bg.size[0])
 
     return bg  # changes are saved to the bg so return that
 
@@ -68,7 +69,7 @@ def make_leave(pfp: BytesIO, member: discord.Member):
     tag = str(member)  # username#1234
     joinpos = member.guild.member_count
 
-    bg = Image.open(WELCOMEBG)  # open the welcome background
+    bg = Image.open(LEAVEBG)  # open the goodbye background
     bg = bg.resize((1024, 425))  # resize
 
     pfp = Image.open(pfp)  # make the pfp a PIL Image
@@ -79,14 +80,13 @@ def make_leave(pfp: BytesIO, member: discord.Member):
 
     draw = ImageDraw.Draw(bg)  # Start a draw canvas using the background
 
-    draw = ImageDraw.Draw(bg)
-
-    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 60)
-    draw = draw_text(115, font, "Goodbye", draw, bg.size[0])
-    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 40)
-    draw = draw_text(195, font, tag, draw, bg.size[0])
-    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 38)
-    draw = draw_text(250, font, f"They were our {num_suffix(joinpos)} member", draw, bg.size[0])
+    font = ImageFont.truetype("FreeMonoBold.ttf", 60)
+    draw = draw_text(75, font, "Goodbye,", draw, bg.size[0])
+    font = ImageFont.truetype("FreeMonoBold.ttf", 40)
+    draw = draw_text(155, font, tag, draw, bg.size[0])
+    draw = draw_text(215, font, f"They were our {num_suffix(joinpos)} member.", draw, bg.size[0])
+    font = ImageFont.truetype("FreeMonoBold.ttf", 60)
+    draw = draw_text(270, font, "_", draw, bg.size[0])
     # STUFF HERE
 
     return bg  # changes are saved to the bg so return that
