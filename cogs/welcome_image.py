@@ -58,7 +58,8 @@ def make_welcome(pfp: BytesIO, member: discord.Member):
     draw = draw_text(75, font, "Welcome,", draw, bg.size[0])
     font = ImageFont.truetype("FreeMonoBold.ttf", 40)
     draw = draw_text(155, font, tag, draw, bg.size[0])
-    draw = draw_text(215, font, f"You are our {num_suffix(joinpos)} member!", draw, bg.size[0])
+    font = ImageFont.truetype("FreeMonoBold.ttf", 36)
+    draw = draw_text(220, font, f"You are our {num_suffix(joinpos)} member!", draw, bg.size[0])
     font = ImageFont.truetype("FreeMonoBold.ttf", 60)
     draw = draw_text(270, font, "_", draw, bg.size[0])
 
@@ -67,7 +68,7 @@ def make_welcome(pfp: BytesIO, member: discord.Member):
 
 def make_leave(pfp: BytesIO, member: discord.Member):
     tag = str(member)  # username#1234
-    joinpos = member.guild.member_count
+    joinpos = member.guild.member_count + 1
 
     bg = Image.open(LEAVEBG)  # open the goodbye background
     bg = bg.resize((1024, 425))  # resize
@@ -84,7 +85,8 @@ def make_leave(pfp: BytesIO, member: discord.Member):
     draw = draw_text(75, font, "Goodbye,", draw, bg.size[0])
     font = ImageFont.truetype("FreeMonoBold.ttf", 40)
     draw = draw_text(155, font, tag, draw, bg.size[0])
-    draw = draw_text(215, font, f"They were our {num_suffix(joinpos)} member.", draw, bg.size[0])
+    font = ImageFont.truetype("FreeMonoBold.ttf", 36)
+    draw = draw_text(220, font, f"They were our {num_suffix(joinpos)} member.", draw, bg.size[0])
     font = ImageFont.truetype("FreeMonoBold.ttf", 60)
     draw = draw_text(270, font, "_", draw, bg.size[0])
     # STUFF HERE
