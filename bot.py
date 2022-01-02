@@ -19,7 +19,7 @@ class Bot(commands.Bot):
         await channel.send(f"<@114352655857483782> - restart detected.")
 
 
-intents = discord.Intents(guild_messages=True, guilds=True, members=True, guild_reactions=True, emojis=True, bans=True)
+intents = discord.Intents.all()
 bot = Bot(command_prefix=PREFIX, messages=True, case_insensitive=True, owner_ids=[114352655857483782],
           allowed_mentions=discord.AllowedMentions(roles=False, everyone=False), intents=intents,
           chunk_guilds_at_startup=False)
