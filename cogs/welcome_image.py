@@ -2,7 +2,7 @@ from discord.ext import commands
 import discord
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-from config import SERVER_ID, WELCOME_IMAGE_ID
+from config import GUILD_ID, WELCOME_IMAGE_ID
 
 WELCOMEBG = "./Join.png"
 LEAVEBG = "./Leave.png"
@@ -121,7 +121,7 @@ class WelcomeImage(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         channel = self.bot.get_channel(WELCOME_IMAGE_ID)
-        if member.guild.id != SERVER_ID:
+        if member.guild.id != GUILD_ID:
             return
         image = await self.get_pfp(member)
         image = make_welcome(BytesIO(image), member)
@@ -130,7 +130,7 @@ class WelcomeImage(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         channel = self.bot.get_channel(WELCOME_IMAGE_ID)
-        if member.guild.id != SERVER_ID:
+        if member.guild.id != GUILD_ID:
             return
         image = await self.get_pfp(member)
         image = make_leave(BytesIO(image), member)

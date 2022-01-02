@@ -2,7 +2,7 @@
 
 import discord
 from discord.ext import commands
-from config import LOG_ID, RED
+from config import LOG_ID, RED, GUILD_ID
 import datetime as dt
 import traceback as tb
 from utils.utils import BotMember, BadSubCommand
@@ -15,7 +15,7 @@ LEAVE = 0x1982c4  # blue
 ROLE = 0xEE6F3D  # orange
 NICKNAME = 0x6a4c93  # purple
 VOICE = 0x99e5da  # aqua ish
-GUILD_ID = 925804557001437184
+
 
 def _crop(text, chars=2000, border="--Snippet--"):
     """
@@ -27,11 +27,13 @@ def _crop(text, chars=2000, border="--Snippet--"):
         text += border  # append border to signify cut off
     return text
 
+
 async def error_embed(ctx, error):
     em = discord.Embed(colour=RED, title=f"⛔ Error: {error}")
     em.set_footer(icon_url=ctx.guild.icon_url, text=ctx.guild.name)
     em.timestamp = dt.datetime.utcnow()
     return await ctx.send(embed=em)
+
 
 def traceback(e):  # Converts an exception into the full traceback report
     return ''.join(tb.format_exception(None, e, e.__traceback__))
