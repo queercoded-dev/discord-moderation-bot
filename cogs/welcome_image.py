@@ -71,7 +71,7 @@ def make_leave(pfp: BytesIO, member: discord.Member):
     joinpos = member.guild.member_count + 1
 
     bg = Image.open(LEAVEBG)  # open the goodbye background
-    bg = bg.resize((1024, 425))  # resize
+    bg = bg.resize((1024, 415))  # resize
 
     pfp = Image.open(pfp)  # make the pfp a PIL Image
     pfp = pfp.resize((265, 265))  # make pfp 265x265
