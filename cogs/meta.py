@@ -209,6 +209,18 @@ class Help(commands.Cog, name="Meta"):
         msg = f"Pong!\nDiscord latency: {self.bot.latency * 1000:.0f}ms\nBot Latency: {duration:.0f}ms"
         await message.edit(content=msg)
 
+    @commands.command()
+    @commands.has_guild_permissions(manage_messages=True)
+    async def purge(self, ctx, number: int):
+        """
+        Purge
+        """
+        await ctx.channel.purge(limit=number)
+        em = discord.Embed(colour=RED, description=f"{ctx.author.mention} Purge complete!")
+        em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
+        em.timestamp = dt.datetime.utcnow()
+        return await ctx.send(embed=em)
+
 
 def setup(bot):
     bot.add_cog(Help(bot))
