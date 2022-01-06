@@ -23,7 +23,7 @@ class ReactView(discord.ui.View):
             await interaction.response.send_message(f"L", ephemeral=False)
 
 
-class ReactionCreate(commands.Cog, name="TestingCog"):
+class ReactionCreate(commands.Cog, name="ReactionCreate"):
     def __init__(self, bot):
         self.bot = bot
 
