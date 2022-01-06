@@ -160,7 +160,7 @@ class Help(commands.Cog, name="Meta"):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if self.bot.user.mentioned_in(message):
+        if message.content == f"<@{self.bot.user.id}> " or message.content == f"<@!{self.bot.user.id}> ":
             em = discord.Embed(description=f'My prefix is: `{PREFIX}`, use `{PREFIX}help` to see the commands!',
                                colour=MAIN)
             em.set_footer(icon_url=message.guild.icon.url, text=message.guild.name)
