@@ -1,2 +1,3 @@
 python-dotenv
 Pillow
+git+https://github.com/iDevision/enhanced-discord.py

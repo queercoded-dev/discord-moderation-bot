@@ -1,23 +1,15 @@
 from discord.ext import commands
 import discord
-from utils.utils import Page, chunks
+from utils.utils import Page, chunks, pos_int
 from config import MAIN, RED, PREFIX
 import datetime as dt
 import re
 from time import perf_counter
 
 mention = re.compile(r"<@!?[0-9]{15,20}>")
-perms = [
-    "add_reactions", "administrator", "attach_files", "ban_members", "change_nickname", "connect",
-    "create_instant_invite", "deafen_members", "embed_links", "kick_members", "manage_channels",
-    "manage_emojis", "manage_guild", "manage_messages", "manage_nicknames", "manage_roles",
-    "manage_webhooks", "mention_everyone", "move_members", "mute_members", "priority_speaker", "read_message_history",
-    "read_messages", "request_to_speak", "send_messages", "send_tts_messages", "speak", "stream", "use_external_emojis",
-    "use_slash_commands", "use_voice_activation", "view_audit_log", "view_guild_insights",
-]
 
 
-async def help_embed(ctx: commands.Context, bot: commands.Bot, command):
+async def help_embed(ctx: commands.Context, bot: commands.Bot, command: commands.Command):
     p = ctx.prefix if not mention.match(ctx.prefix) else PREFIX
     em = discord.Embed(colour=MAIN)
     em.set_thumbnail(url=bot.user.display_avatar.url)
@@ -59,11 +51,11 @@ async def help_embed(ctx: commands.Context, bot: commands.Bot, command):
 
 class Help(commands.Cog, name="Meta"):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot = bot  # type: commands.Bot
         self.start_time = dt.datetime.now()
 
     @commands.command(aliases=["commands"], hidden=True)
-    async def help(self, ctx, *, command=""):
+    async def help(self, ctx: commands.Context, *, command=""):
         """
         You are here
         Shows information on a given command. If no command is provided, all available commands will be listed
@@ -166,30 +158,9 @@ class Help(commands.Cog, name="Meta"):
     async def on_ready(self):
         self.start_time = dt.datetime.utcnow()
 
-    @commands.Cog.listener()  # reloaded via commands
-    async def on_load(self, cog):
-        if cog + ".py" == __import__("os").path.basename(__file__):  # if cog is this file
-            self.start_time = dt.datetime.utcnow()
-
-    @commands.command(aliases=["support", "invite", "join"])
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.channel)
-    async def info(self, ctx):
-        """
-        Displays information about the bot
-        """
-        em = discord.Embed(colour=MAIN, title=f"{self.bot.user.name} Info:")
-        em.set_thumbnail(url=self.bot.user.display_avatar.url)
-        em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
-        em.timestamp = dt.datetime.utcnow()
-
-        em.description = f"This bot was created by Keiran#1712 for" \
-                         f" Aquafiinas community discord.\n\n" \
-                         f" If you'd like a bot created please DM Keiran directly!"
-        await ctx.send(embed=em)
-
     @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.content == f"<@{self.bot.user.id}>" or message.content == f"<@!{self.bot.user.id}>":
+    async def on_message(self, message: discord.Message):
+        if self.bot.user.mentioned_in(message):
             em = discord.Embed(description=f'My prefix is: `{PREFIX}`, use `{PREFIX}help` to see the commands!',
                                colour=MAIN)
             em.set_footer(icon_url=message.guild.icon.url, text=message.guild.name)
@@ -198,7 +169,7 @@ class Help(commands.Cog, name="Meta"):
 
     @commands.command()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def ping(self, ctx):
+    async def ping(self, ctx: commands.Context):
         """
         Ping!
         """
@@ -211,15 +182,15 @@ class Help(commands.Cog, name="Meta"):
 
     @commands.command()
     @commands.has_guild_permissions(manage_messages=True)
-    async def purge(self, ctx, number: int):
+    async def purge(self, ctx: commands.Context, number: pos_int):
         """
-        Purge
+        Purge messages in this channel
         """
-        await ctx.channel.purge(limit=number)
+        await ctx.channel.purge(limit=number + 1)  # +1 to account for the ctx message
         em = discord.Embed(colour=RED, description=f"{ctx.author.mention} Purge complete!")
         em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
         em.timestamp = dt.datetime.utcnow()
-        return await ctx.send(embed=em)
+        await ctx.send(embed=em)
 
 
 def setup(bot):

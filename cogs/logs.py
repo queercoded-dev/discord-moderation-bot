@@ -1,5 +1,3 @@
-# Rewritten for Devision DPY
-
 import discord
 from discord.ext import commands
 from config import LOG_ID, RED, GUILD_ID
@@ -17,7 +15,7 @@ NICKNAME = 0x6a4c93  # purple
 VOICE = 0x99e5da  # aqua ish
 
 
-def _crop(text, chars=2000, border="--Snippet--"):
+def _crop(text: str, chars=2000, border="--Snippet--"):
     """
     Crop text to a certain character length based on word borders
     """
@@ -28,23 +26,23 @@ def _crop(text, chars=2000, border="--Snippet--"):
     return text
 
 
-async def error_embed(ctx, error):
+async def error_embed(ctx: commands.Context, error: str):
     em = discord.Embed(colour=RED, title=f"⛔ Error: {error}")
     em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
     em.timestamp = dt.datetime.utcnow()
     return await ctx.send(embed=em)
 
 
-def traceback(e):  # Converts an exception into the full traceback report
+def traceback(e: Exception):  # Converts an exception into the full traceback report
     return ''.join(tb.format_exception(None, e, e.__traceback__))
 
 
 class Log(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot = bot  # type: commands.Bot
 
     @commands.Cog.listener()
-    async def on_message_delete(self, message):
+    async def on_message_delete(self, message: discord.Message):
         if message.guild.id != GUILD_ID:
             return
         if message.author.bot:  # ignore bots
@@ -63,7 +61,7 @@ class Log(commands.Cog):
         await channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_message_edit(self, old_message, message):
+    async def on_message_edit(self, old_message: discord.Message, message: discord.Message):
         if message.guild.id != GUILD_ID:
             return
         if message.author.bot:  # ignore bots
@@ -86,7 +84,7 @@ class Log(commands.Cog):
         await channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_member_update(self, old, new):
+    async def on_member_update(self, old: discord.Member, new: discord.Member):
         if new.guild.id != GUILD_ID:
             return
 
@@ -145,7 +143,7 @@ class Log(commands.Cog):
         await channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx: commands.Context, error: Exception):
         """
         Handle all errors from commands by default
         """
@@ -190,25 +188,17 @@ class Log(commands.Cog):
                 except discord.DiscordException:
                     pass
         else:  # Unknown/unhandled exception
-            data = {
-                "type": "error",
-                "trace": traceback(error),  # Full traceback
-                "gid": str(ctx.guild.id),
-                "uid": str(ctx.author.id),
-                "mid": str(ctx.message.id),
-                "cid": str(ctx.channel.id),
-                "msg": ctx.message.content,
-                "stamp": dt.datetime.utcnow(),
-                "ephemeral": dt.datetime.utcnow(),  # Used to indicate this should be deleted
-            }
-            entry_id = data
-
-            em = discord.Embed(colour=RED, title=f"⛔ Unknown Error Occurred",
-                               description=f"Error Log ID:\n```{entry_id}```\n")
+            em = discord.Embed(colour=RED, title=f"⛔ Unknown Error Occurred")
             em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
             em.timestamp = dt.datetime.utcnow()
             await ctx.send(embed=em)
-            await self.bot.get_channel(LOG_ID).send(embed=em)
+
+            # TODO - Ideally we would send as many lines of the traceback as we can fit
+            error_text = traceback(error)
+            # Will send the traceback if we have enough space, otherwise just send what the error was
+            content = f"Error in {ctx.message.jump_url}\n```{error_text if len(error_text) < 1500 else error}```"
+            channel = self.bot.get_channel(LOG_ID)
+            await channel.send(content)
 
 
 def setup(bot):

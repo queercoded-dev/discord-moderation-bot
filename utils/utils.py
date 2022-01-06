@@ -6,7 +6,7 @@ import datetime as dt
 from math import ceil
 
 
-def chunks(lst, n):
+def chunks(lst: list, n: int):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
@@ -75,7 +75,7 @@ class Page:
             except discord.NotFound:
                 return
 
-    def _check(self, r, user):
+    def _check(self, r: discord.Reaction, user: discord.User):
         return user.id == self.ctx.author.id and str(r) in nav_emotes and self.msg.id == r.message.id
 
     async def start(self):
@@ -101,9 +101,9 @@ class Page:
             await self.stop()
 
 
-def short_time(time):
+def short_time(time: int):
     """
-    Convert a timedelta into a simple "1h 5m" style representation
+    Converts time in seconds into a simple "1h 5m" style representation
     """
     if not isinstance(time, int) and not isinstance(time, float):
         return "None"
@@ -135,3 +135,10 @@ class BadSubCommand(Exception):  # Used in command groups when the parent comman
 
 class BotMember(commands.CommandError):  # Custom error for StrictMember
     pass
+
+
+def pos_int(digit: str):
+    """Ensures the input is a positive integer"""
+    if digit.isdigit() and int(digit) > 0:
+        return int(digit)
+    raise commands.BadArgument
