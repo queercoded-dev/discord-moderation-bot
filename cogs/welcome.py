@@ -128,7 +128,7 @@ class WelcomeImage(commands.Cog):
         image = await self.get_pfp(member)
         image = make_leave(BytesIO(image), member)
         await self.send_image(image)
-        await sleep(7200) # Sleeps for 2 hours
+        await sleep(7200)  # Sleeps for 2 hours
         role = member.guild.get_role(MEMBER_ID)
         await member.add_roles(role, reason="MemberRole")
 
