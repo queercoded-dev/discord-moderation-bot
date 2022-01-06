@@ -3,7 +3,7 @@ import discord
 from discord.ui import View, Select
 
 
-class Test(discord.ui.View):
+class ReactView(discord.ui.View):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
@@ -14,23 +14,24 @@ class Test(discord.ui.View):
         discord.SelectOption(label="Third option", value="Arch", emoji="arch:927947448788353104")])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
         if select.values[0] == "Python":
-            Role = self.bot.guild.get_role(927942689381552138)
-            User = await self.bot.guild.fetch_member(interaction.user.id)
-            await User.add_roles(Role, reason="Reaction Role.")
-            await interaction.response.send_message(f"You Selected python and I've added you to the role!", ephemeral=False)
+            role = self.bot.guild.get_role(927942689381552138)
+            user = await self.bot.guild.fetch_member(interaction.user.id)
+            await user.add_roles(role, reason="Reaction Role.")
+            await interaction.response.send_message(f"You Selected python and I've added you to the role!",
+                                                    ephemeral=False)
         else:
-            await interaction.response.send_message(f"L", epheremal=False)
+            await interaction.response.send_message(f"L", ephemeral=False)
 
 
-class TestingCog(commands.Cog, name="TestingCog"):
+class ReactionCreate(commands.Cog, name="TestingCog"):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
     async def test(self, ctx):
-        view = Test(ctx)
+        view = ReactView(ctx)
         await ctx.send("Testing the select menu!", view=view)
 
 
 def setup(bot):
-    bot.add_cog(TestingCog(bot))
+    bot.add_cog(ReactionCreate(bot))
