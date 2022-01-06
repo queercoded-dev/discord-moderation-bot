@@ -64,7 +64,7 @@ def make_welcome(pfp: BytesIO, member: discord.Member):
 
 def make_leave(pfp: BytesIO, member: discord.Member):
     tag = str(member)  # username#1234
-    join_pos = member.guild.member_count + 1
+    join_pos = member.guild.member_count
 
     bg = Image.open(LEAVE_BG)  # open the goodbye background
     bg = bg.resize((1024, 415))  # resize
@@ -82,7 +82,7 @@ def make_leave(pfp: BytesIO, member: discord.Member):
     font = ImageFont.truetype(FONT, 40)
     draw = draw_text(365, 155, font, tag, draw)
     font = ImageFont.truetype(FONT, 36)
-    draw = draw_text(365, 220, font, f"They were our {num_suffix(join_pos)} member.", draw)
+    draw = draw_text(365, 220, font, f"We now have {join_pos} members.", draw)
     font = ImageFont.truetype(FONT, 60)
     draw = draw_text(365, 270, font, "_", draw)
 
