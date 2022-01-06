@@ -2,7 +2,8 @@ from discord.ext import commands
 import discord
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-from config import GUILD_ID, WELCOME_IMAGE_ID
+from config import GUILD_ID, WELCOME_IMAGE_ID, MEMBER_ID
+from asyncio import sleep
 
 WELCOME_BG = "./Join.png"
 LEAVE_BG = "./Leave.png"
@@ -91,7 +92,7 @@ def make_leave(pfp: BytesIO, member: discord.Member):
 
 class WelcomeImage(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot  # type: commands.Bot
+        self.bot = bot  ###type: commands.Bot
 
     async def get_pfp(self, member: discord.Member):
         """
@@ -127,6 +128,9 @@ class WelcomeImage(commands.Cog):
         image = await self.get_pfp(member)
         image = make_leave(BytesIO(image), member)
         await self.send_image(image)
+        await sleep(7200)
+        role = member.guild.get_role(MEMBER_ID)
+        await member.add_roles(role, reason="MemberRole")
 
 
 def setup(bot):
