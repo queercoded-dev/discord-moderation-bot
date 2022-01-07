@@ -25,7 +25,7 @@ class ReactView(discord.ui.View):
                             discord.SelectOption(label="C",
                                                  value="C", emoji="c_:927947447425204304"),
                             discord.SelectOption(label="C++",
-                                                 value="c++", emoji="cpp:927947734151999488"),
+                                                 value="C++", emoji="cpp:927947734151999488"),
                             discord.SelectOption(label="HTML/CSS",
                                                  value="HTML/CSS", emoji="html:928791843741769739"),
                             discord.SelectOption(label="PHP",
@@ -62,14 +62,16 @@ class ReactView(discord.ui.View):
 
         await interaction.response.send_message(f"You chose: {languages}!",
                                                 ephemeral=True)
+        await interaction.channel.purge(limit=1)# Deletes interaction message once done
 
 
 class ReactionCreate(commands.Cog, name="ReactionCreate"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(slash_command=True, ephemeral=True)
-    async def LangReact(self, ctx):
+    @commands.command()
+    async def langreact(self, ctx):
+        await ctx.message.delete(delay=2)# Deletes command in chat
         view = ReactView(ctx)
         await ctx.send("Select your language roles below.", view=view)
 
