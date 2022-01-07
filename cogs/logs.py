@@ -3,8 +3,9 @@ from discord.ext import commands
 from config import LOG_ID, RED, GUILD_ID
 import datetime as dt
 import traceback as tb
-from utils.utils import BotMember, BadSubCommand
 from math import ceil
+
+from utils import format_time
 
 EDIT = 0xffca3a  # yellow
 DELETE = 0xff595e  # red
@@ -98,6 +99,7 @@ class Log(commands.Cog):
             embed.timestamp = dt.datetime.utcnow()
 
             await channel.send(embed=embed)
+
         elif old.roles != new.roles:  # if roles were changed
             if [x for x in old.roles if x not in new.roles]:  # role removed
                 aor = "removed from"
@@ -115,6 +117,23 @@ class Log(commands.Cog):
             embed.timestamp = dt.datetime.utcnow()
 
             await channel.send(embed=embed)
+
+        if old.timeout_until != new.timeout_until:  # Timeout has changed
+            if new.timed_out:  # Is timed out
+                embed = discord.Embed(colour=ROLE, description=f"🔇 **Timed out**")
+                embed.add_field(name="Duration",
+                                value=format_time(new.timeout_until - dt.datetime.now(dt.timezone.utc), "second"))
+                embed.add_field(name="Unmute", value=discord.utils.format_dt(new.timeout_until, "R"))
+                embed.set_author(name=new.display_name, icon_url=new.display_avatar.url)
+                embed.timestamp = dt.datetime.utcnow()
+
+                await channel.send(embed=embed)
+            else:
+                embed = discord.Embed(colour=ROLE, description=f"🔇 **Timeout removed**")
+                embed.set_author(name=new.display_name, icon_url=new.display_avatar.url)
+                embed.timestamp = dt.datetime.utcnow()
+
+                await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -161,12 +180,8 @@ class Log(commands.Cog):
             await error_embed(ctx, f"Your command is missing the `{error.param.name}` argument")
         elif isinstance(error, commands.BadArgument) or isinstance(error, commands.BadUnionArgument):
             await error_embed(ctx, "A bad argument was passed")
-        elif isinstance(error, BadSubCommand):
-            await error_embed(ctx, "Unknown subcommand")
         elif isinstance(error, commands.ArgumentParsingError):
             await error_embed(ctx, "Your arguments were formatted incorrectly")
-        elif isinstance(error, BotMember):
-            await error_embed(ctx, "This command cannot be used on a bot")
         elif isinstance(error, commands.CommandOnCooldown):
             time = ceil(error.retry_after)
             em = discord.Embed(colour=RED, title="⛔ Error: Command on cooldown",

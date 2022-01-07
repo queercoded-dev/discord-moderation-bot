@@ -1,9 +1,10 @@
+from math import ceil
+
 import discord
 from discord.ext import commands
 from asyncio import TimeoutError
-from datetime import timedelta
+import re
 import datetime as dt
-from math import ceil
 
 
 def chunks(lst: list, n: int):
@@ -101,44 +102,54 @@ class Page:
             await self.stop()
 
 
-def short_time(time: int):
-    """
-    Converts time in seconds into a simple "1h 5m" style representation
-    """
-    if not isinstance(time, int) and not isinstance(time, float):
-        return "None"
-
-    time = timedelta(seconds=time)
-
-    secs = time.total_seconds()
-    days, secs = divmod(secs, 86400)
-    hrs, secs = divmod(secs, 3600)
-    mins, secs = divmod(secs, 60)
-    secs = ceil(secs)
-    o = ""
-    if days:
-        o += f"{days:.0f}d "
-    if hrs:
-        o += f"{hrs:.0f}h "
-    if mins:
-        o += f"{mins:.0f}m "
-    if secs or not o:  # If seconds is 0, we will only append it if the string is blank
-        o += f"{secs:.0f}s"
-    if o.endswith(" "):
-        o = o[:-1]
-    return o
-
-
-class BadSubCommand(Exception):  # Used in command groups when the parent command can't be run automatically
-    pass
-
-
-class BotMember(commands.CommandError):  # Custom error for StrictMember
-    pass
-
-
 def pos_int(digit: str):
     """Ensures the input is a positive integer"""
     if digit.isdigit() and int(digit) > 0:
         return int(digit)
     raise commands.BadArgument
+
+
+class RelativeTime(commands.Converter):
+    """An argument converter to match relative time, e.g. 1h 30m
+    Returns the total amount of time in minutes"""
+
+    async def convert(self, ctx, argument):
+        rex = re.findall(r"\b(?:([1-9][0-9]{0,4}(?:[.,][1-9]{1,2})?)([dhm]))+\b", argument, re.IGNORECASE)
+        if rex:
+            total = 0
+            for num, unit in rex:
+                num = float(num)
+
+                if unit == "h":
+                    num *= 60  # if in hours, convert to minutes
+                elif unit == "d":
+                    num *= 1440
+                total += num
+            return total
+        else:
+            raise commands.BadArgument
+
+
+def format_time(time: dt.timedelta, *args):
+    """
+    Convert timedelta into something readable
+    """
+    f_time = {}  # this will store our days, hours, minutes, seconds
+    time = ceil(time.total_seconds())
+    f_time["day"], remainder = divmod(time, 86400)  # get days as a whole number
+    f_time["hour"], remainder = divmod(remainder, 3600)  # etc
+    f_time["minute"], f_time["second"] = divmod(remainder, 60)
+
+    output = ""
+    for unit, value in f_time.items():  # iterate through
+        # Ignore values if they are 0 and handle plurals
+        if unit not in args:
+            if value == 1:
+                output += f"{int(value)} {unit}, "
+            elif value > 1:
+                output += f"{int(value)} {unit}s, "
+
+    if not output and args:
+        output = f"0 {list(f_time)[-len(args) - 1]}s, "
+
+    return output[:-2]  # cut off the final ", "
