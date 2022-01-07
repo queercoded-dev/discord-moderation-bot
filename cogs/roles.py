@@ -35,15 +35,17 @@ class ReactView(discord.ui.View):
 
         languages = ", ".join(select.values)
         await interaction.response.send_message(f"You chose: {languages}!", ephemeral=True)
+        await interaction.channel.purge(limit=1)  # Deletes interaction message once done
 
 
 class ReactionCreate(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
 
-    @commands.command(slash_command=True, ephemeral=True)
+    @commands.command(slash_command=True, ephemeral=True, slash_command_guilds=[925804557001437184])
     async def langreact(self, ctx: commands.Context):
         """Creates a role picker for languages"""
+        await ctx.message.delete(delay=2)  # Deletes command in chat
         await ctx.send("Select your language roles below.", view=ReactView(ctx))
 
 
