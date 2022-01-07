@@ -29,7 +29,6 @@ def _crop(text: str, chars=2000, border="--Snippet--"):
 
 async def error_embed(ctx: commands.Context, error: str):
     em = discord.Embed(colour=RED, title=f"⛔ Error: {error}")
-    em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
     em.timestamp = dt.datetime.utcnow()
     return await ctx.send(embed=em)
 
