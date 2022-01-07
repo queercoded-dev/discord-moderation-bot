@@ -9,7 +9,7 @@ class ReactView(discord.ui.View):
         self.bot = bot
 
     @discord.ui.select(custom_id="Language Reaction Menu", placeholder="Please Select Your Languages.",
-                       min_values=1, max_values=3, options=[
+                       min_values=1, max_values=12, options=[
                             discord.SelectOption(label="Python",
                                                  value="Python", emoji="python:927948531229139014"),
                             discord.SelectOption(label="Rust",
@@ -37,6 +37,7 @@ class ReactView(discord.ui.View):
                             discord.SelectOption(label="C#",
                                                  value="C#", emoji="csharp:928785241697583104")])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
+        await self.bot.defer()
         languages_dict = {
             "Python": 927942689381552138,
             "Rust": 927943241255505931,
@@ -67,7 +68,7 @@ class ReactionCreate(commands.Cog, name="ReactionCreate"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(slash_command=True, ephemeral=True)
     async def LangReact(self, ctx):
         view = ReactView(ctx)
         await ctx.send("Select your language roles below.", view=view)
