@@ -26,8 +26,7 @@ class ReactView(discord.ui.View):
     @discord.ui.select(custom_id="Language Reaction Menu", placeholder="Please Select Your Languages.",
                        min_values=1, max_values=12,
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
-                                for name, value in LANGUAGE_VIEW.items()]
-                       )
+                                for name, value in LANGUAGE_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
         for language in select.values:
             role_id = LANGUAGE_VIEW[language]["roleId"]
