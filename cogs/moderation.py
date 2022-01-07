@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from config import MOD_ID, RED, YELLOW
-from utils.utils import pos_int, RelativeTime, format_time
+from utils.utils import pos_int, RelativeTime, format_time, utc_now
 from utils.db_utils import insert_doc, find_docs
 import datetime as dt
 
@@ -18,14 +18,14 @@ async def add_modlog(user_id: int, mod_id: int, log_type: str, reason: str, dura
         "type": log_type,
         "duration": duration,
         "reason": reason,
-        "timestamp": dt.datetime.now(dt.timezone.utc),
+        "timestamp": utc_now(),
     }
 
     await insert_doc("mod_logs", data)
 
 
 async def can_moderate_user(ctx: commands.Context, member: discord.Member):
-    em = discord.Embed(color=RED, timestamp=dt.datetime.now(dt.timezone.utc))
+    em = discord.Embed(color=RED, timestamp=utc_now())
 
     if member.bot:
         em.title = "🤖 You can't use this command on a bot"
@@ -56,7 +56,7 @@ class Moderation(commands.Cog):
         await ctx.channel.purge(limit=number + 1)  # +1 to account for the ctx message
         em = discord.Embed(colour=RED, description=f"{ctx.author.mention} purged {number} messages!")
         em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
-        em.timestamp = dt.datetime.utcnow()
+        em.timestamp = utc_now()
         await ctx.send(embed=em)
 
     @commands.command(aliases=["timeout"])
@@ -71,13 +71,13 @@ class Moderation(commands.Cog):
 
         duration = dt.timedelta(minutes=sum(duration))
         duration_str = format_time(duration)
-        end_time = dt.datetime.utcnow() + duration
-        dynamic_str = discord.utils.format_dt(end_time.replace(tzinfo=dt.timezone.utc), "R")
+        end_time = utc_now() + duration
+        dynamic_str = discord.utils.format_dt(end_time, "R")
 
         await member.edit(timeout_until=end_time, reason=reason)
         await add_modlog(member.id, ctx.author.id, "timeout", reason, duration)
 
-        em = discord.Embed(color=YELLOW, timestamp=dt.datetime.utcnow())
+        em = discord.Embed(color=YELLOW, timestamp=utc_now())
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         em.description = f"{member.mention} has been timed out by {ctx.author.mention} for {duration_str}\n" \
                          f"Unmute: {dynamic_str}"
@@ -91,7 +91,7 @@ class Moderation(commands.Cog):
 
         await member.edit(timeout_until=None)
 
-        em = discord.Embed(color=RED, timestamp=dt.datetime.now(dt.timezone.utc))
+        em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         em.description = f"{member.mention} has been ummuted"
         em.set_footer(text=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -109,7 +109,7 @@ class Moderation(commands.Cog):
 
         await add_modlog(member.id, ctx.author.id, "warn", reason)
 
-        em = discord.Embed(color=RED, timestamp=dt.datetime.now(dt.timezone.utc))
+        em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
         em.description = f"You have been warned for \n```{reason}```"
         can_dm = True
@@ -118,7 +118,7 @@ class Moderation(commands.Cog):
         except discord.Forbidden:
             can_dm = False
 
-        em = discord.Embed(color=RED, timestamp=dt.datetime.now(dt.timezone.utc))
+        em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         em.description = f"{member.mention} was warned by {ctx.author.mention} for:\n```{reason}```"
         if not can_dm:
@@ -148,7 +148,7 @@ class Moderation(commands.Cog):
                         f"**Timestamp:** {timestamp}\n"
                         f"**Mod:** {mod.mention if mod else 'Unknown'}")
 
-        em = discord.Embed(colour=RED, timestamp=dt.datetime.now(dt.timezone.utc), description="")
+        em = discord.Embed(colour=RED, timestamp=utc_now(), description="")
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
 
         # Go through the entries in reverse, to add as many entries as we can to the description

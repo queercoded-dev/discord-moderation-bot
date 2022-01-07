@@ -1,19 +1,18 @@
 import discord
 from discord.ext import commands
 from config import LOG_ID, RED, GUILD_ID
+from utils.utils import format_time, utc_now
 import datetime as dt
 import traceback as tb
 from math import ceil
 
-from utils import format_time
-
-EDIT = 0xffca3a  # yellow
 DELETE = 0xff595e  # red
-JOIN = 0x8ac926  # green
-LEAVE = 0x1982c4  # blue
 ROLE = 0xEE6F3D  # orange
-NICKNAME = 0x6a4c93  # purple
+EDIT = 0xffca3a  # yellow
+JOIN = 0x8ac926  # green
 VOICE = 0x99e5da  # aqua ish
+LEAVE = 0x1982c4  # blue
+NICKNAME = 0x6a4c93  # purple
 
 
 def _crop(text: str, chars=2000, border="--Snippet--"):
@@ -29,7 +28,7 @@ def _crop(text: str, chars=2000, border="--Snippet--"):
 
 async def error_embed(ctx: commands.Context, error: str):
     em = discord.Embed(colour=RED, title=f"⛔ Error: {error}")
-    em.timestamp = dt.datetime.utcnow()
+    em.timestamp = utc_now()
     return await ctx.send(embed=em)
 
 
@@ -52,13 +51,13 @@ class Log(commands.Cog):
 
         desc = f"🗑️ **Message from {message.author.mention} deleted in {message.channel.mention}**\n" \
                f"{_crop(message.content)}"
-        embed = discord.Embed(description=desc, colour=DELETE)
-        embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
-        embed.set_footer(text=f"User ID: {message.author.id}")
-        embed.timestamp = dt.datetime.utcnow()
+        em = discord.Embed(description=desc, colour=DELETE)
+        em.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
+        em.set_footer(text=f"User ID: {message.author.id}")
+        em.timestamp = utc_now()
 
         channel = self.bot.get_channel(LOG_ID)
-        await channel.send(embed=embed)
+        await channel.send(embed=em)
 
     @commands.Cog.listener()
     async def on_message_edit(self, old_message: discord.Message, message: discord.Message):
@@ -71,17 +70,17 @@ class Log(commands.Cog):
         if message.channel.id == LOG_ID:
             return
 
-        embed = discord.Embed(colour=EDIT, url=message.jump_url,
+        em = discord.Embed(colour=EDIT, url=message.jump_url,
                               description=f"✏ **Message from {message.author.mention} edited in "
                                           f"{message.channel.mention}**")
-        embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
+        em.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
 
-        embed.add_field(name="Old", value=_crop(old_message.content, chars=1024), inline=False)
-        embed.add_field(name="New", value=_crop(message.content, chars=1024), inline=False)
-        embed.set_footer(text=f"User ID: {message.author.id}")
-        embed.timestamp = dt.datetime.utcnow()
+        em.add_field(name="Old", value=_crop(old_message.content, chars=1024), inline=False)
+        em.add_field(name="New", value=_crop(message.content, chars=1024), inline=False)
+        em.set_footer(text=f"User ID: {message.author.id}")
+        em.timestamp = utc_now()
         channel = self.bot.get_channel(LOG_ID)
-        await channel.send(embed=embed)
+        await channel.send(embed=em)
 
     @commands.Cog.listener()
     async def on_member_update(self, old: discord.Member, new: discord.Member):
@@ -91,13 +90,13 @@ class Log(commands.Cog):
         channel = self.bot.get_channel(LOG_ID)
 
         if old.display_name != new.display_name:  # if nickname changed
-            embed = discord.Embed(colour=NICKNAME, description=f"✏ **{new.mention}'s nickname was changed**")
-            embed.set_author(name=new.display_name, icon_url=new.display_avatar.url)
-            embed.add_field(name="Old", value=old.display_name, inline=False)
-            embed.add_field(name="New", value=new.display_name, inline=False)
-            embed.timestamp = dt.datetime.utcnow()
+            em = discord.Embed(colour=NICKNAME, description=f"✏ **{new.mention}'s nickname was changed**")
+            em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
+            em.add_field(name="Old", value=old.display_name, inline=False)
+            em.add_field(name="New", value=new.display_name, inline=False)
+            em.timestamp = utc_now()
 
-            await channel.send(embed=embed)
+            await channel.send(embed=em)
 
         elif old.roles != new.roles:  # if roles were changed
             if [x for x in old.roles if x not in new.roles]:  # role removed
@@ -110,55 +109,55 @@ class Log(commands.Cog):
                 return
 
             # format embed
-            embed = discord.Embed(colour=ROLE, description=f"🔰 **Role {aor} {new.mention}**")
-            embed.add_field(name="Role:", value=role, inline=False)
-            embed.set_author(name=new.display_name, icon_url=new.display_avatar.url)
-            embed.timestamp = dt.datetime.utcnow()
+            em = discord.Embed(colour=ROLE, description=f"🔰 **Role {aor} {new.mention}**")
+            em.add_field(name="Role:", value=role, inline=False)
+            em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
+            em.timestamp = utc_now()
 
-            await channel.send(embed=embed)
+            await channel.send(embed=em)
 
         if old.timeout_until != new.timeout_until:  # Timeout has changed
             if new.timed_out:  # Is timed out
-                embed = discord.Embed(colour=ROLE, description=f"🔇 **Timed out**")
-                embed.add_field(name="Duration",
+                em = discord.Embed(colour=ROLE, description=f"🔇 **Timed out**")
+                em.add_field(name="Duration",
                                 value=format_time(new.timeout_until - dt.datetime.now(dt.timezone.utc), "second"))
-                embed.add_field(name="Unmute", value=discord.utils.format_dt(new.timeout_until, "R"))
-                embed.set_author(name=new.display_name, icon_url=new.display_avatar.url)
-                embed.timestamp = dt.datetime.utcnow()
+                em.add_field(name="Unmute", value=discord.utils.format_dt(new.timeout_until, "R"))
+                em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
+                em.timestamp = utc_now()
 
-                await channel.send(embed=embed)
+                await channel.send(embed=em)
             else:
-                embed = discord.Embed(colour=ROLE, description=f"🔇 **Timeout removed**")
-                embed.set_author(name=new.display_name, icon_url=new.display_avatar.url)
-                embed.timestamp = dt.datetime.utcnow()
+                em = discord.Embed(colour=ROLE, description=f"🔇 **Timeout removed**")
+                em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
+                em.timestamp = utc_now()
 
-                await channel.send(embed=embed)
+                await channel.send(embed=em)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         if member.guild.id != GUILD_ID:
             return
 
-        embed = discord.Embed(colour=JOIN, description=member.mention, title="📥 User Joined")
-        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-        embed.set_footer(text=f"User ID: {member.id}")
-        embed.timestamp = dt.datetime.utcnow()
+        em = discord.Embed(colour=JOIN, description=member.mention, title="📥 User Joined")
+        em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+        em.set_footer(text=f"User ID: {member.id}")
+        em.timestamp = utc_now()
 
         channel = self.bot.get_channel(LOG_ID)
-        await channel.send(embed=embed)
+        await channel.send(embed=em)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         if member.guild.id != GUILD_ID:
             return
 
-        embed = discord.Embed(colour=LEAVE, description=member.mention, title="📤 User Left")
-        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-        embed.set_footer(text=f"User ID: {member.id}")
-        embed.timestamp = dt.datetime.utcnow()
+        em = discord.Embed(colour=LEAVE, description=member.mention, title="📤 User Left")
+        em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+        em.set_footer(text=f"User ID: {member.id}")
+        em.timestamp = utc_now()
 
         channel = self.bot.get_channel(LOG_ID)
-        await channel.send(embed=embed)
+        await channel.send(embed=em)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, error: Exception):
@@ -186,7 +185,7 @@ class Log(commands.Cog):
             em = discord.Embed(colour=RED, title="⛔ Error: Command on cooldown",
                                description=f"Try again in {time} seconds")
             em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
-            em.timestamp = dt.datetime.utcnow()
+            em.timestamp = utc_now()
             await ctx.reply(embed=em, delete_after=time)
         elif isinstance(error, discord.Forbidden):
             # Try and send an alert to the channel, or to the user
@@ -197,14 +196,14 @@ class Log(commands.Cog):
                     em = discord.Embed(colour=RED,
                                        title="⛔ Error: I do not have permission to send messages in that channel")
                     em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
-                    em.timestamp = dt.datetime.utcnow()
+                    em.timestamp = utc_now()
                     await ctx.author.send(embed=em)
                 except discord.DiscordException:
                     pass
         else:  # Unknown/unhandled exception
             em = discord.Embed(colour=RED, title=f"⛔ Unknown Error Occurred")
             em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
-            em.timestamp = dt.datetime.utcnow()
+            em.timestamp = utc_now()
             await ctx.send(embed=em)
 
             # TODO - Ideally we would send as many lines of the traceback as we can fit
