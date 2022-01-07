@@ -6,7 +6,6 @@ import ast
 import datetime as dt
 import re
 import config
-from utils.db_utils import *
 from utils.utils import *
 
 
