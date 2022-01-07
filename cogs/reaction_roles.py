@@ -68,7 +68,7 @@ class ReactionCreate(commands.Cog, name="ReactionCreate"):
         self.bot = bot
 
     @commands.command()
-    async def test(self, ctx):
+    async def LangReact(self, ctx):
         view = ReactView(ctx)
         await ctx.send("Testing the select menu!", view=view)
 
