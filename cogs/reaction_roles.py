@@ -70,7 +70,7 @@ class ReactionCreate(commands.Cog, name="ReactionCreate"):
     @commands.command()
     async def LangReact(self, ctx):
         view = ReactView(ctx)
-        await ctx.send("Testing the select menu!", view=view)
+        await ctx.send("Select your language roles below.", view=view)
 
 
 def setup(bot):
