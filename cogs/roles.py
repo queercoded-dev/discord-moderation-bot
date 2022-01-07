@@ -42,7 +42,8 @@ class ReactionCreate(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
 
-    @commands.command(slash_command=True, ephemeral=True, slash_command_guilds=[925804557001437184])
+    @commands.command(message_command=False, slash_command=True, ephemeral=True,
+                      slash_command_guilds=[925804557001437184])
     async def langreact(self, ctx: commands.Context):
         """Creates a role picker for languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
