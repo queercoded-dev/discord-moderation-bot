@@ -3,8 +3,9 @@
 A discord management bot created for the Queer Coded discord server
 
 ### Requirements
-Python 3.8 or higher
+- Python 3.8 or higher
+- A running mongodb instance
 
 ### Setup
 1. Run `pip install -r requirements.txt`
-2. Create a .env file with BOT_TOKEN set to your bot's token
+2. Create a .env file with BOT_TOKEN set to your bot's token, and MONGO_URI set to your [mongodb connection string](https://docs.mongodb.com/manual/reference/connection-string/)
