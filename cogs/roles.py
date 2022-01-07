@@ -25,7 +25,8 @@ class ReactView(discord.ui.View):
 
     @discord.ui.select(custom_id="Language Reaction Menu", placeholder="Please Select Your Languages.",
                        min_values=1, max_values=12,
-                       options=[discord.SelectOption(label=name, emoji=value["emoji"]) for name, value in LANGUAGE_VIEW.items()]
+                       options=[discord.SelectOption(label=name, emoji=value["emoji"])
+                                for name, value in LANGUAGE_VIEW.items()]
                        )
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
         for language in select.values:
@@ -44,7 +45,7 @@ class ReactionCreate(commands.Cog):
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[925804557001437184])
-    async def langreact(self, ctx: commands.Context):
+    async def langrole(self, ctx: commands.Context):
         """Creates a role picker for languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
         await ctx.send("Select your language roles below.", view=ReactView(ctx))
