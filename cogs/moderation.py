@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-from config import MOD_ID, RED, YELLOW
+from config import MOD_ID, RED, YELLOW, LOG_ID
+from cogs.logs import MODERATION
 from utils.utils import pos_int, RelativeTime, format_time, utc_now
 from utils.db_utils import insert_doc, find_docs
 import datetime as dt
@@ -8,13 +9,14 @@ import datetime as dt
 EMBED_DESC_LIMIT = 4096
 
 
-async def add_modlog(user_id: int, mod_id: int, log_type: str, reason: str, duration: dt.timedelta = None):
+async def add_modlog(user: discord.Member, mod: discord.Member, log_type: str, reason: str,
+                     duration: dt.timedelta = None):
     if duration:
         duration = duration.total_seconds()
 
     data = {
-        "user": user_id,
-        "mod": mod_id,
+        "user": user.id,
+        "mod": mod.id,
         "type": log_type,
         "duration": duration,
         "reason": reason,
@@ -47,6 +49,25 @@ class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
 
+    async def mod_action_embed(self, title=discord.Embed.Empty, desc=discord.Embed.Empty,
+                               author: discord.Member = None, target: discord.Member = None,
+                               fields: dict[str, str] = None):
+        em = discord.Embed(colour=MODERATION, timestamp=utc_now(), title=title, description=desc)
+        if author:
+            em.set_footer(text=f"By {author.display_name}", icon_url=author.display_avatar.url)
+
+        if target:
+            em.set_author(name=target.display_name, icon_url=target.display_avatar.url)
+            if not author:
+                em.set_footer(text=f"User ID: {target.id}")
+
+        if fields:
+            for name, value in fields.items():
+                em.add_field(name=name, value=value)
+
+        channel = self.bot.get_channel(LOG_ID)
+        await channel.send(embed=em)
+
     @commands.command()
     @commands.has_role(MOD_ID)
     async def purge(self, ctx: commands.Context, number: pos_int):
@@ -58,6 +79,10 @@ class Moderation(commands.Cog):
         em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
         em.timestamp = utc_now()
         await ctx.send(embed=em)
+
+        # Log action
+        await self.mod_action_embed(author=ctx.author, title="🔥 Purge",
+                                    desc="{ctx.author.mention} purged {number} messages in {ctx.channel.mention}")
 
     @commands.command(aliases=["timeout"])
     @commands.has_role(MOD_ID)
@@ -75,13 +100,17 @@ class Moderation(commands.Cog):
         dynamic_str = discord.utils.format_dt(end_time, "R")
 
         await member.edit(timeout_until=end_time, reason=reason)
-        await add_modlog(member.id, ctx.author.id, "timeout", reason, duration)
+        await add_modlog(member, ctx.author, "timeout", reason, duration)
 
         em = discord.Embed(color=YELLOW, timestamp=utc_now())
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         em.description = f"{member.mention} has been timed out by {ctx.author.mention} for {duration_str}\n" \
                          f"Unmute: {dynamic_str}"
         await ctx.send(embed=em)
+
+        await self.mod_action_embed(author=ctx.author, target=member, title="🔇 Timed out",
+                                    desc=f"```{reason}```" if reason else None,
+                                    fields={"Duration": duration_str, "Unmute": dynamic_str})
 
     @commands.command()
     @commands.has_role(MOD_ID)
@@ -97,6 +126,8 @@ class Moderation(commands.Cog):
         em.set_footer(text=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
         await ctx.send(embed=em)
 
+        await self.mod_action_embed(author=ctx.author, target=member, title="🔊 Timeout removed")
+
     @commands.command()
     @commands.has_role(MOD_ID)
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason):
@@ -107,7 +138,7 @@ class Moderation(commands.Cog):
         if not await can_moderate_user(ctx, member):
             return
 
-        await add_modlog(member.id, ctx.author.id, "warn", reason)
+        await add_modlog(member, ctx.author, "warn", reason)
 
         em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
@@ -122,8 +153,10 @@ class Moderation(commands.Cog):
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         em.description = f"{member.mention} was warned by {ctx.author.mention} for:\n```{reason}```"
         if not can_dm:
-            em.set_footer(text="Unable to DM that user")
+            em.set_footer(text="Unable to DM user")
         await ctx.send(embed=em)
+
+        await self.mod_action_embed(author=ctx.author, target=member, title="Warned for:", desc=f"```{reason}```")
 
     @commands.command()
     @commands.has_role(MOD_ID)

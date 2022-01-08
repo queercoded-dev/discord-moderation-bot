@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
 from config import LOG_ID, RED, GUILD_ID
-from utils.utils import format_time, utc_now
-import datetime as dt
+from utils.utils import utc_now
 import traceback as tb
 from math import ceil
 
+
+MODERATION = 0x481D24  # dark red
 DELETE = 0xff595e  # red
 ROLE = 0xEE6F3D  # orange
 EDIT = 0xffca3a  # yellow
@@ -71,8 +72,8 @@ class Log(commands.Cog):
             return
 
         em = discord.Embed(colour=EDIT, url=message.jump_url,
-                              description=f"✏ **Message from {message.author.mention} edited in "
-                                          f"{message.channel.mention}**")
+                           description=f"✏ **Message from {message.author.mention} edited in "
+                                       f"{message.channel.mention}**")
         em.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
 
         em.add_field(name="Old", value=_crop(old_message.content, chars=1024), inline=False)
@@ -115,23 +116,6 @@ class Log(commands.Cog):
             em.timestamp = utc_now()
 
             await channel.send(embed=em)
-
-        if old.timeout_until != new.timeout_until:  # Timeout has changed
-            if new.timed_out:  # Is timed out
-                em = discord.Embed(colour=ROLE, description=f"🔇 **Timed out**")
-                em.add_field(name="Duration",
-                                value=format_time(new.timeout_until - dt.datetime.now(dt.timezone.utc), "second"))
-                em.add_field(name="Unmute", value=discord.utils.format_dt(new.timeout_until, "R"))
-                em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
-                em.timestamp = utc_now()
-
-                await channel.send(embed=em)
-            else:
-                em = discord.Embed(colour=ROLE, description=f"🔇 **Timeout removed**")
-                em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
-                em.timestamp = utc_now()
-
-                await channel.send(embed=em)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
