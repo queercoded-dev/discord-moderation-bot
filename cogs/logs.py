@@ -93,6 +93,7 @@ class Log(commands.Cog):
         if old.display_name != new.display_name:  # if nickname changed
             em = discord.Embed(colour=NICKNAME, description=f"✏ **{new.mention}'s nickname was changed**")
             em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
+            em.set_footer(text=f"User ID: {new.id}")
             em.add_field(name="Old", value=old.display_name, inline=False)
             em.add_field(name="New", value=new.display_name, inline=False)
             em.timestamp = utc_now()
@@ -113,6 +114,7 @@ class Log(commands.Cog):
             em = discord.Embed(colour=ROLE, description=f"🔰 **Role {aor} {new.mention}**")
             em.add_field(name="Role:", value=role, inline=False)
             em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
+            em.set_footer(text=f"User ID: {new.id}")
             em.timestamp = utc_now()
 
             await channel.send(embed=em)

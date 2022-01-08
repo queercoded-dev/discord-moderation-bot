@@ -5,6 +5,7 @@ from cogs.logs import MODERATION
 from utils.utils import pos_int, RelativeTime, format_time, utc_now
 from utils.db_utils import insert_doc, find_docs
 import datetime as dt
+from typing import Union
 
 EMBED_DESC_LIMIT = 4096
 
@@ -50,11 +51,11 @@ class Moderation(commands.Cog):
         self.bot = bot  # type: commands.Bot
 
     async def mod_action_embed(self, title=discord.Embed.Empty, desc=discord.Embed.Empty,
-                               author: discord.Member = None, target: discord.Member = None,
+                               author: discord.Member = None, target: Union[discord.Member, discord.User] = None,
                                fields: dict[str, str] = None):
         em = discord.Embed(colour=MODERATION, timestamp=utc_now(), title=title, description=desc)
         if author:
-            em.set_footer(text=f"By {author.display_name}", icon_url=author.display_avatar.url)
+            em.set_footer(text=f"By {author.name}", icon_url=author.display_avatar.url)
 
         if target:
             em.set_author(name=target.display_name, icon_url=target.display_avatar.url)
@@ -82,7 +83,7 @@ class Moderation(commands.Cog):
 
         # Log action
         await self.mod_action_embed(author=ctx.author, title="🔥 Purge",
-                                    desc="{ctx.author.mention} purged {number} messages in {ctx.channel.mention}")
+                                    desc=f"{ctx.author.mention} purged {number} messages in {ctx.channel.mention}")
 
     @commands.command(aliases=["timeout"])
     @commands.has_role(MOD_ID)
@@ -108,8 +109,9 @@ class Moderation(commands.Cog):
                          f"Unmute: {dynamic_str}"
         await ctx.send(embed=em)
 
-        await self.mod_action_embed(author=ctx.author, target=member, title="🔇 Timed out",
-                                    desc=f"```{reason}```" if reason else None,
+        await self.mod_action_embed(author=ctx.author, target=member,
+                                    desc=f"**🔇 Timed out {member.mention}**" +
+                                         ("**for**:\n```{reason}```" if reason else ""),
                                     fields={"Duration": duration_str, "Unmute": dynamic_str})
 
     @commands.command()
@@ -156,7 +158,49 @@ class Moderation(commands.Cog):
             em.set_footer(text="Unable to DM user")
         await ctx.send(embed=em)
 
-        await self.mod_action_embed(author=ctx.author, target=member, title="Warned for:", desc=f"```{reason}```")
+        await self.mod_action_embed(author=ctx.author, target=member,
+                                    desc=f"**Warned {member.mention} for:**\n```{reason}```")
+
+    @commands.command()
+    @commands.has_role(MOD_ID)
+    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason=None):
+        if not await can_moderate_user(ctx, member):
+            return
+
+        em = discord.Embed(color=RED, timestamp=utc_now())
+        em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
+        em.description = f"You have been banned for \n```{reason}```"
+        can_dm = True
+        try:
+            await member.send(embed=em)
+        except discord.Forbidden:
+            can_dm = False
+
+        await member.ban(reason=reason)
+        await add_modlog(member, ctx.author, "ban", reason)
+
+        em = discord.Embed(color=RED, timestamp=utc_now())
+        em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+        em.description = f"{member.mention} was banned by {ctx.author.mention} for:\n```{reason}```"
+        if not can_dm:
+            em.set_footer(text="Unable to DM user")
+        await ctx.send(embed=em)
+
+        await self.mod_action_embed(author=ctx.author, target=member,
+                                    desc=f"**Banned {member.mention} for:**\n```{reason}```")
+
+    @commands.command()
+    @commands.has_role(MOD_ID)
+    async def unban(self, ctx: commands.Context, user: discord.User):
+        await ctx.guild.unban(user, reason=f"Unbanned by {ctx.author.name}({ctx.author.id})")
+
+        em = discord.Embed(color=RED, timestamp=utc_now())
+        em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+        em.description = f"{user.mention} has been unbanned"
+        em.set_footer(text=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
+        await ctx.send(embed=em)
+
+        await self.mod_action_embed(author=ctx.author, target=user, title=f"👼 Unbanned {user.mention}")
 
     @commands.command()
     @commands.has_role(MOD_ID)
