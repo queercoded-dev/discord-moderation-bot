@@ -52,7 +52,7 @@ class Moderation(commands.Cog):
 
     async def mod_action_embed(self, title=discord.Embed.Empty, desc=discord.Embed.Empty,
                                author: discord.Member = None, target: Union[discord.Member, discord.User] = None,
-                               fields: dict[str, str] = None):
+                               fields= None):
         em = discord.Embed(colour=MODERATION, timestamp=utc_now(), title=title, description=desc)
         if author:
             em.set_footer(text=f"By {author.name}", icon_url=author.display_avatar.url)
