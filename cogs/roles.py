@@ -61,7 +61,7 @@ class InterestsReactView(discord.ui.View):
         self.ctx = ctx
 
     @discord.ui.select(custom_id="Interest Reaction Menu", placeholder="Please Select Your Interest.",
-                       min_values=1, max_values=12,
+                       min_values=1, max_values=5,
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
                                 for name, value in INTEREST_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
@@ -81,7 +81,7 @@ class OSReactView(discord.ui.View):
         self.ctx = ctx
 
     @discord.ui.select(custom_id="Operating System Reaction Menu", placeholder="Please Select Your Operating Systems.",
-                       min_values=1, max_values=12,
+                       min_values=1, max_values=6,
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
                                 for name, value in OS_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
