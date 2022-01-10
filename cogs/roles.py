@@ -104,21 +104,21 @@ class ReactionCreate(commands.Cog):
     async def langrole(self, ctx: commands.Context):
         """Creates a role picker for languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        await ctx.send(view=LangReactView(ctx))
+        await ctx.send("Please select from the language roles below.", view=LangReactView(ctx))
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[925804557001437184])
     async def interestrole(self, ctx: commands.Context):
         """Creates a role picker for languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        await ctx.send(view=InterestsReactView(ctx))
+        await ctx.send("Please select from the interest roles below.", view=InterestsReactView(ctx))
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[925804557001437184])
     async def osrole(self, ctx: commands.Context):
         """Creates a role picker for languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        await ctx.send(view=OSReactView(ctx))
+        await ctx.send("Please select from the OS roles below.", view=OSReactView(ctx))
 
 
 def setup(bot):
