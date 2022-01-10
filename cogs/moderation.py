@@ -89,6 +89,9 @@ class Moderation(commands.Cog):
     @commands.has_role(MOD_ID)
     async def mute(self, ctx: commands.Context, member: discord.Member, duration: commands.Greedy[RelativeTime] = None,
                    *, reason=None):
+        """
+        Bans a user for certain time-scale
+        """
         if duration is None:
             raise commands.BadArgument
 
@@ -117,6 +120,9 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_role(MOD_ID)
     async def unmute(self, ctx: commands.Context, member: discord.Member):
+        """
+        Unmute a user
+        """
         if not await can_moderate_user(ctx, member):
             return
 
@@ -164,6 +170,9 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_role(MOD_ID)
     async def ban(self, ctx: commands.Context, member: discord.Member, *, reason=None):
+        """
+        Ban a user (currently only perma ban)
+        """
         if not await can_moderate_user(ctx, member):
             return
 
@@ -192,6 +201,9 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_role(MOD_ID)
     async def unban(self, ctx: commands.Context, user: discord.User):
+        """
+        Unban a user
+        """
         await ctx.guild.unban(user, reason=f"Unbanned by {ctx.author.name}({ctx.author.id})")
 
         em = discord.Embed(color=RED, timestamp=utc_now())
