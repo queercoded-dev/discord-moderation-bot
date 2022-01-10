@@ -7,7 +7,7 @@ import re
 def run_blacklist(text):
     text = re.sub(r"[*_`~]", "", text)  # get rid of markdown
 
-    with open("./word_blacklist.txt", "r") as fd:  # open blacklist file
+    with open("./blacklist.txt", "r") as fd:  # open blacklist file
         for i in fd.readlines():
             i = i.rstrip()  # stick all the blacklist rules in
             if re.search(fr"\b{i}\b", text, re.IGNORECASE):  # if that is a match
