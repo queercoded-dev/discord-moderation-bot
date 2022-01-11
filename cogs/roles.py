@@ -1,5 +1,6 @@
 from discord.ext import commands
 import discord
+from config import LOG_ID
 
 LANGUAGE_VIEW = {
     "C": {"roleId": 927942745639780432, "emoji": "c_:927947447425204304"},
@@ -47,13 +48,18 @@ class LangReactView(discord.ui.View):
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
         for language in select.values:
             role_id = LANGUAGE_VIEW[language]["roleId"]
+            language_divider = self.ctx.guild.get_role(928722640867319859) # Language divider
             role = self.ctx.guild.get_role(role_id)
             await self.ctx.author.add_roles(role, reason=f"Reaction role.")
+            try:
+                await self.ctx.author.add_roles(language_divider, reason=f"Language divider added.")
+            except discord.HTTPException:
+                LogChannel = self.ctx.guild.get_channel(LOG_ID)
+                await LogChannel.send(f"Failed to add divider role!")
 
         languages = ", ".join(select.values)
         await interaction.response.send_message(f"You chose: {languages}!", ephemeral=True)
         await interaction.channel.purge(limit=1)  # Deletes interaction message once done
-
 
 class InterestsReactView(discord.ui.View):
     def __init__(self, ctx: commands.Context):
@@ -68,7 +74,13 @@ class InterestsReactView(discord.ui.View):
         for interest in select.values:
             role_id = INTEREST_VIEW[interest]["roleId"]
             role = self.ctx.guild.get_role(role_id)
+            interest_divider = self.ctx.guild.get_role(928722640867319859)  # Interest Divider
             await self.ctx.author.add_roles(role, reason=f"Reaction role.")
+            try:
+                await self.ctx.author.add_roles(interest_divider, reason=f"Interest Divider added.")
+            except discord.HTTPException:
+                LogChannel = self.ctx.guild.get_channel(LOG_ID)
+                await LogChannel.send(f"Failed to add divider role!")
 
         interests = ", ".join(select.values)
         await interaction.response.send_message(f"You chose: {interests}!", ephemeral=True)
@@ -88,7 +100,13 @@ class OSReactView(discord.ui.View):
         for os in select.values:
             role_id = OS_VIEW[os]["roleId"]
             role = self.ctx.guild.get_role(role_id)
+            os_divider = self.ctx.guild.get_role(928737228539174992)
             await self.ctx.author.add_roles(role, reason=f"Reaction role.")
+            try:
+                await self.ctx.author.add_roles(os_divider, reason=f"OS Divider added")
+            except discord.HTTPException:
+                LogChannel = self.ctx.guild.get_channel(LOG_ID)
+                await LogChannel.send(f"Failed to add divider role!")
 
         osystems = ", ".join(select.values)
         await interaction.response.send_message(f"You chose: {osystems}!", ephemeral=True)
