@@ -1,7 +1,8 @@
 from discord.ext import commands
 import discord
-from config import LOG_ID
+from config import LOG_ID, GUILD_ID
 
+LANG_DIVIDER = 928718017678958613
 LANGUAGE_VIEW = {
     "C": {"roleId": 927942745639780432, "emoji": "c_:927947447425204304"},
     "C#": {"roleId": 928784767254663228, "emoji": "csharp:928785241697583104"},
@@ -18,6 +19,7 @@ LANGUAGE_VIEW = {
     "Typescript": {"roleId": 928780873267040266, "emoji": "typescript:927947446301106257"},
 }
 
+INTEREST_DIVIDER = 928722640867319859
 INTEREST_VIEW = {
     "Programming": {"roleId": 928786544440000522, "emoji": "code:928786531081150495"},
     "3D Printing": {"roleId": 928723382751592518, "emoji": "3dprinting:928790227248635945"},
@@ -26,6 +28,7 @@ INTEREST_VIEW = {
     "Circuits": {"roleId": 928724312502988820, "emoji": "transistor:927947446791831602"}
 }
 
+OS_DIVIDER = 928737228539174992
 OS_VIEW = {
     "Linux": {"roleId": 928722740821753937, "emoji": "linux:927948388853506138"},
     "MacOS": {"roleId": 928722779161890816, "emoji": "apple:927947449170026496"},
@@ -34,6 +37,46 @@ OS_VIEW = {
     "Arch": {"roleId": 928737067851206696, "emoji": "arch:927947448788353104"},
     "BSD": {"roleId": 928780279802372136, "emoji": "bsd:927947447139958795"}
 }
+
+
+async def role_callback(view_data, divider: int,
+                        ctx: commands.Context, select: discord.ui.Select, interaction: discord.Interaction):
+    added_roles = []
+    removed_roles = []
+    author_roles = [x.id for x in ctx.author.roles]
+
+    # Assign or remove roles as needed
+    for selection in select.values:
+        role_id = view_data[selection]["roleId"]
+        role = ctx.guild.get_role(role_id)
+        if role_id in author_roles:
+            await ctx.author.remove_roles(role, reason="Reaction role.")
+            author_roles.remove(role_id)  # list needs to be updated to reflect changes
+            removed_roles.append(selection)
+        else:
+            await ctx.author.add_roles(role, reason="Reaction role.")
+            author_roles.append(role_id)
+            added_roles.append(selection)
+
+    # Check if divider role needs to be assigned
+    has_role_in_category = False
+    for value in view_data.values():
+        if value["roleId"] in author_roles:
+            has_role_in_category = True
+            break
+
+    # Assign divider if needed
+    divider_role = ctx.guild.get_role(divider)
+    if has_role_in_category and divider not in author_roles:
+        await ctx.author.add_roles(divider_role, reason="Divider role.")
+    elif not has_role_in_category and divider in author_roles:
+        await ctx.author.remove_roles(divider_role, reason="Divider role.")
+
+    # Respond with selection
+    added_roles = ", ".join(added_roles) if added_roles else "None"
+    removed_roles = ", ".join(removed_roles) if removed_roles else "None"
+    await interaction.response.send_message(f"Added: {added_roles}\nRemoved: {removed_roles}", ephemeral=True)
+    await interaction.channel.purge(limit=1)  # Deletes interaction message once done
 
 
 class LangReactView(discord.ui.View):
@@ -46,24 +89,7 @@ class LangReactView(discord.ui.View):
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
                                 for name, value in LANGUAGE_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
-        author_roles = self.ctx.author.roles
-        for language in select.values:
-            role_id = LANGUAGE_VIEW[language]["roleId"]
-            language_divider = self.ctx.guild.get_role(928722640867319859) # Language divider
-            role = self.ctx.guild.get_role(role_id)
-            if role in author_roles:
-                await self.ctx.author.remove_roles(role, reason=f"Reaction role.")
-            else:
-                await self.ctx.author.add_roles(role, reason=f"Reaction role.")
-            try:
-                await self.ctx.author.add_roles(language_divider, reason=f"Language divider added.")
-            except discord.HTTPException:
-                LogChannel = self.ctx.guild.get_channel(LOG_ID)
-                await LogChannel.send(f"Failed to add divider role!")
-
-        languages = ", ".join(select.values)
-        await interaction.response.send_message(f"You chose: {languages}!", ephemeral=True)
-        await interaction.channel.purge(limit=1)  # Deletes interaction message once done
+        await role_callback(LANGUAGE_VIEW, LANG_DIVIDER, self.ctx, select, interaction)
 
 
 class InterestsReactView(discord.ui.View):
@@ -76,24 +102,7 @@ class InterestsReactView(discord.ui.View):
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
                                 for name, value in INTEREST_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
-        author_roles = self.ctx.author.roles
-        for interest in select.values:
-            role_id = INTEREST_VIEW[interest]["roleId"]
-            role = self.ctx.guild.get_role(role_id)
-            interest_divider = self.ctx.guild.get_role(928722640867319859)  # Interest Divider
-            if role in author_roles:
-                await self.ctx.author.remove_roles(role, reason=f"Reaction role.")
-            else:
-                await self.ctx.author.add_roles(role, reason=f"Reaction role.")
-            try:
-                await self.ctx.author.add_roles(interest_divider, reason=f"Interest Divider added.")
-            except discord.HTTPException:
-                LogChannel = self.ctx.guild.get_channel(LOG_ID)
-                await LogChannel.send(f"Failed to add divider role!")
-
-        interests = ", ".join(select.values)
-        await interaction.response.send_message(f"You chose: {interests}!", ephemeral=True)
-        await interaction.channel.purge(limit=1)  # Deletes interaction message once done
+        await role_callback(INTEREST_VIEW, INTEREST_DIVIDER, self.ctx, select, interaction)
 
 
 class OSReactView(discord.ui.View):
@@ -106,24 +115,7 @@ class OSReactView(discord.ui.View):
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
                                 for name, value in OS_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
-        author_roles = self.ctx.author.roles
-        for os in select.values:
-            role_id = OS_VIEW[os]["roleId"]
-            role = self.ctx.guild.get_role(role_id)
-            if role in author_roles:
-                await self.ctx.author.remove_roles(role, reason=f"Reaction role.")
-            else:
-                await self.ctx.author.add_roles(role, reason=f"Reaction role.")
-            try:
-                os_divider = self.ctx.guild.get_role(928737228539174992)
-                await self.ctx.author.add_roles(os_divider, reason=f"OS Divider added")
-            except discord.HTTPException:
-                LogChannel = self.ctx.guild.get_channel(LOG_ID)
-                await LogChannel.send(f"Failed to add divider role!")
-
-        osystems = ", ".join(select.values)
-        await interaction.response.send_message(f"You chose: {osystems}!", ephemeral=True)
-        await interaction.channel.purge(limit=1)  # Deletes interaction message once done
+        await role_callback(OS_VIEW, OS_DIVIDER, self.ctx, select, interaction)
 
 
 class ReactionCreate(commands.Cog):
@@ -131,23 +123,23 @@ class ReactionCreate(commands.Cog):
         self.bot = bot  # type: commands.Bot
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
-                      slash_command_guilds=[925804557001437184])
+                      slash_command_guilds=[GUILD_ID])
     async def langrole(self, ctx: commands.Context):
-        """Creates a role picker for languages"""
+        """Creates a role picker for programming languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
         await ctx.send("Please select from the language roles below.", view=LangReactView(ctx))
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
-                      slash_command_guilds=[925804557001437184])
+                      slash_command_guilds=[GUILD_ID])
     async def interestrole(self, ctx: commands.Context):
-        """Creates a role picker for languages"""
+        """Creates a role picker for interests"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
         await ctx.send("Please select from the interest roles below.", view=InterestsReactView(ctx))
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
-                      slash_command_guilds=[925804557001437184])
+                      slash_command_guilds=[GUILD_ID])
     async def osrole(self, ctx: commands.Context):
-        """Creates a role picker for languages"""
+        """Creates a role picker for operating systems"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
         await ctx.send("Please select from the OS roles below.", view=OSReactView(ctx))
 

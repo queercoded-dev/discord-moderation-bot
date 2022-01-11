@@ -186,6 +186,8 @@ class Log(commands.Cog):
                     await ctx.author.send(embed=em)
                 except discord.DiscordException:
                     pass
+        elif isinstance(error, commands.DisabledCommand):
+            return
         else:  # Unknown/unhandled exception
             em = discord.Embed(colour=RED, title=f"⛔ Unknown Error Occurred")
             em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
