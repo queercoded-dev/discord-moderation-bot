@@ -3,9 +3,11 @@ from discord.ext import commands
 from config import MOD_ID, RED, YELLOW, LOG_ID
 from cogs.logs import MODERATION
 from utils.utils import pos_int, RelativeTime, format_time, utc_now
-from utils.db_utils import insert_doc, find_docs
+from utils.db_utils import insert_doc, find_docs, del_doc
 import datetime as dt
 from typing import Union
+from random import randint
+import re
 
 EMBED_DESC_LIMIT = 4096
 
@@ -16,6 +18,7 @@ async def add_modlog(user: discord.Member, mod: discord.Member, log_type: str, r
         duration = duration.total_seconds()
 
     data = {
+        "_id": str(randint(0, 9999)).zfill(4),
         "user": user.id,
         "mod": mod.id,
         "type": log_type,
@@ -52,7 +55,7 @@ class Moderation(commands.Cog):
 
     async def mod_action_embed(self, title=discord.Embed.Empty, desc=discord.Embed.Empty,
                                author: discord.Member = None, target: Union[discord.Member, discord.User] = None,
-                               fields= None):
+                               fields=None):
         em = discord.Embed(colour=MODERATION, timestamp=utc_now(), title=title, description=desc)
         if author:
             em.set_footer(text=f"By {author.name}", icon_url=author.display_avatar.url)
@@ -223,6 +226,7 @@ class Moderation(commands.Cog):
         entries = await find_docs("mod_logs", {"user": member.id})
         text = []
         for entry in entries:
+            _id = entry["_id"]
             log_type = entry["type"].title()
             mod = await ctx.guild.try_member(entry["mod"])
             reason = entry["reason"]
@@ -231,7 +235,7 @@ class Moderation(commands.Cog):
 
             duration = f"**Duration:** {format_time(duration)}\n" if duration else ""  # Don't show if no duration
 
-            text.append(f"**{log_type}**\n"
+            text.append(f"**Case #{_id}: {log_type}**\n"
                         f"**Reason:** {reason}\n"
                         f"{duration}"
                         f"**Timestamp:** {timestamp}\n"
@@ -250,6 +254,28 @@ class Moderation(commands.Cog):
 
         em.title = f"Mod Logs: {len(entries)} Entries"
 
+        await ctx.send(embed=em)
+
+    @commands.command(aliases=["unwarn"])
+    @commands.has_role(MOD_ID)
+    async def removecase(self, ctx, case_number):
+        """
+        Remove a case by its case #
+        """
+        if not re.match(r"[0-9]{4}", case_number):
+            raise commands.BadArgument
+
+        result = await del_doc("mod_logs", case_number)
+
+        case = result.raw_result
+        reason = case["reason"]
+        timestamp = discord.utils.format_dt(case["timestamp"])
+        mod = await ctx.guild.try_member(case["mod"])
+
+        em = discord.Embed(colour=RED, timestamp=utc_now())
+        em.description = f"**Reason:** {reason}\n" \
+                         f"**Timestamp:** {timestamp}\n" \
+                         f"**Mod:** {mod.mention if mod else 'Unknown'}"
         await ctx.send(embed=em)
 
 

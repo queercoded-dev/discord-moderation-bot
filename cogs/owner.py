@@ -6,7 +6,7 @@ import ast
 import datetime as dt
 import re
 import config
-from utils.utils import *
+from utils import *
 
 
 def insert_returns(body):
