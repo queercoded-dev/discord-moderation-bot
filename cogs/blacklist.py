@@ -1,5 +1,4 @@
 import discord
-from discord.utils import get
 from discord.ext import commands
 import re
 
@@ -23,8 +22,8 @@ class Blacklist(commands.Cog):
     async def on_message(self, message):
         if run_blacklist(message.content):
             await message.delete()
-            await message.channel.send(f"{message.author.mention} Please be respectful and read the rules."
-                                       , delete_after=5)
+            await message.channel.send(f"{message.author.mention} Please be respectful and read the rules.",
+                                       delete_after=5)
 
 
 def setup(bot):

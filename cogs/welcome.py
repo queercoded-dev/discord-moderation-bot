@@ -90,17 +90,18 @@ def make_leave(pfp: BytesIO, member: discord.Member):
     return bg  # changes are saved to the bg so return that
 
 
+async def get_pfp(member: discord.Member):
+    """
+    Downloads profile picture as a PNG into a bytes object
+    """
+    img = member.display_avatar
+    img = await img.read()
+    return img
+
+
 class WelcomeImage(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot  ###type: commands.Bot
-
-    async def get_pfp(self, member: discord.Member):
-        """
-        Downloads profile picture as a PNG into a bytes object
-        """
-        img = member.display_avatar
-        img = await img.read()
-        return img
+        self.bot = bot  # type: commands.Bot
 
     async def send_image(self, image, filename="image.png"):
         """
@@ -117,7 +118,7 @@ class WelcomeImage(commands.Cog):
     async def on_member_join(self, member: discord.Member):
         if member.guild.id != GUILD_ID:
             return
-        image = await self.get_pfp(member)
+        image = await get_pfp(member)
         image = make_welcome(BytesIO(image), member)
         await self.send_image(image)
 
@@ -125,7 +126,7 @@ class WelcomeImage(commands.Cog):
     async def on_member_remove(self, member: discord.Member):
         if member.guild.id != GUILD_ID:
             return
-        image = await self.get_pfp(member)
+        image = await get_pfp(member)
         image = make_leave(BytesIO(image), member)
         await self.send_image(image)
         await sleep(7200)  # Sleeps for 2 hours

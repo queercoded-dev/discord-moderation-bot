@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from config import LOG_ID, GUILD_ID
+from config import GUILD_ID
 
 LANG_DIVIDER = 928718017678958613
 LANGUAGE_VIEW = {

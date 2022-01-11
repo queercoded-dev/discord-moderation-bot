@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from utils.utils import Page, chunks, pos_int
+from utils.utils import Page, chunks
 from config import MAIN, RED, PREFIX
 import datetime as dt
 import re
