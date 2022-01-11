@@ -5,7 +5,7 @@ import ast
 # These imports are just for the run command, for convenience
 import datetime as dt
 import re
-import config
+from config import GREEN
 from utils.utils import *
 
 
@@ -95,6 +95,19 @@ class Owner(commands.Cog):
         except Exception as e:
             await ctx.send("```py\n>>> {}\n\n\n{}```".format(code, e))
 
+    @commands.command(aliases=["osem"])
+    @commands.is_owner()
+    async def oneshot_embed(self, ctx, channel: discord.TextChannel, title, *, description):
+        """
+        Quick embed t.osem <channel> "<title>" <description>(*)
+        """
+
+        title = str.strip(title)
+        embed = discord.Embed(title=title, description=description, colour=GREEN)
+        embed.set_footer(icon_url=ctx.guild.icon_url, text=ctx.guild.name)
+        embed.set_thumbnail(url=ctx.guild.icon_url)
+        embed.timestamp = dt.datetime.utcnow()
+        await channel.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(Owner(bot))
