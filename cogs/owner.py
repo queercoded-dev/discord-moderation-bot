@@ -104,8 +104,8 @@ class Owner(commands.Cog):
 
         title = str.strip(title)
         embed = discord.Embed(title=title, description=description, colour=GREEN)
-        embed.set_footer(icon_url=ctx.guild.icon_url, text=ctx.guild.name)
-        embed.set_thumbnail(url=ctx.guild.icon_url)
+        embed.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
+        embed.set_thumbnail(url=ctx.guild.icon.url)
         embed.timestamp = dt.datetime.utcnow()
         await channel.send(embed=embed)
 
