@@ -117,7 +117,7 @@ class Moderation(commands.Cog):
 
         await self.mod_action_embed(author=ctx.author, target=member,
                                     desc=f"**🔇 Timed out {member.mention}**" +
-                                         ("**for**:\n```{reason}```" if reason else ""),
+                                         (f"**for**:\n```{reason}```" if reason else ""),
                                     fields={"Duration": duration_str, "Unmute": dynamic_str})
 
     @commands.command()
@@ -265,7 +265,7 @@ class Moderation(commands.Cog):
         if not re.match(r"[0-9]{4}", case_number):
             raise commands.BadArgument
 
-        result = await del_doc("mod_logs", case_number)
+        result = await del_doc(case_number, "mod_logs")
 
         case = result.raw_result
         reason = case["reason"]
