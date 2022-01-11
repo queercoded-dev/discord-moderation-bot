@@ -3,7 +3,7 @@ from discord.ext import commands
 from config import MOD_ID, RED, YELLOW, LOG_ID
 from cogs.logs import MODERATION
 from utils.utils import pos_int, RelativeTime, format_time, utc_now
-from utils.db_utils import insert_doc, find_docs, del_doc
+from utils.db_utils import insert_doc, find_docs, del_doc, get_doc
 import datetime as dt
 from typing import Union
 from random import randint
@@ -17,8 +17,10 @@ async def add_modlog(user: discord.Member, mod: discord.Member, log_type: str, r
     if duration:
         duration = duration.total_seconds()
 
+    case_num = str(randint(0, 9999)).zfill(4)
+
     data = {
-        "case": str(randint(0, 9999)).zfill(4),
+        "case": case_num,
         "user": str(user.id),
         "mod": str(mod.id),
         "type": log_type,
@@ -26,8 +28,9 @@ async def add_modlog(user: discord.Member, mod: discord.Member, log_type: str, r
         "reason": reason,
         "timestamp": utc_now(),
     }
-
     await insert_doc("mod_logs", data)
+
+    return case_num
 
 
 async def can_moderate_user(ctx: commands.Context, member: discord.Member):
@@ -107,12 +110,13 @@ class Moderation(commands.Cog):
         dynamic_str = discord.utils.format_dt(end_time, "R")
 
         await member.edit(timeout_until=end_time, reason=reason)
-        await add_modlog(member, ctx.author, "timeout", reason, duration)
+        case_num = await add_modlog(member, ctx.author, "timeout", reason, duration)
 
         em = discord.Embed(color=YELLOW, timestamp=utc_now())
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         em.description = f"{member.mention} has been timed out by {ctx.author.mention} for {duration_str}\n" \
                          f"Unmute: {dynamic_str}"
+        em.set_footer(text=f"Case #{case_num}")
         await ctx.send(embed=em)
 
         await self.mod_action_embed(author=ctx.author, target=member,
@@ -149,7 +153,7 @@ class Moderation(commands.Cog):
         if not await can_moderate_user(ctx, member):
             return
 
-        await add_modlog(member, ctx.author, "warn", reason)
+        case_num = await add_modlog(member, ctx.author, "warn", reason)
 
         em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
@@ -163,8 +167,7 @@ class Moderation(commands.Cog):
         em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         em.description = f"{member.mention} was warned by {ctx.author.mention} for:\n```{reason}```"
-        if not can_dm:
-            em.set_footer(text="Unable to DM user")
+        em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
         await ctx.send(embed=em)
 
         await self.mod_action_embed(author=ctx.author, target=member,
@@ -189,13 +192,12 @@ class Moderation(commands.Cog):
             can_dm = False
 
         await member.ban(reason=reason)
-        await add_modlog(member, ctx.author, "ban", reason)
+        case_num = await add_modlog(member, ctx.author, "ban", reason)
 
         em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         em.description = f"{member.mention} was banned by {ctx.author.mention} for:\n```{reason}```"
-        if not can_dm:
-            em.set_footer(text="Unable to DM user")
+        em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
         await ctx.send(embed=em)
 
         await self.mod_action_embed(author=ctx.author, target=member,
