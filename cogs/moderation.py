@@ -18,9 +18,9 @@ async def add_modlog(user: discord.Member, mod: discord.Member, log_type: str, r
         duration = duration.total_seconds()
 
     data = {
-        "_id": str(randint(0, 9999)).zfill(4),
-        "user": user.id,
-        "mod": mod.id,
+        "case": str(randint(0, 9999)).zfill(4),
+        "user": str(user.id),
+        "mod": str(mod.id),
         "type": log_type,
         "duration": duration,
         "reason": reason,
@@ -223,23 +223,23 @@ class Moderation(commands.Cog):
         """
         View all mod log entries for the given member
         """
-        entries = await find_docs("mod_logs", {"user": member.id})
+        entries = await find_docs("mod_logs", {"user": str(member.id)})
         text = []
         for entry in entries:
-            _id = entry["_id"]
+            case_num = entry["case"]
             log_type = entry["type"].title()
-            mod = await ctx.guild.try_member(entry["mod"])
+            mod = entry["mod"]
             reason = entry["reason"]
             duration = dt.timedelta(seconds=entry["duration"]) if entry["duration"] else None
             timestamp = discord.utils.format_dt(entry["timestamp"])
 
             duration = f"**Duration:** {format_time(duration)}\n" if duration else ""  # Don't show if no duration
 
-            text.append(f"**Case #{_id}: {log_type}**\n"
+            text.append(f"**Case #{case_num}: {log_type}**\n"
                         f"**Reason:** {reason}\n"
                         f"{duration}"
                         f"**Timestamp:** {timestamp}\n"
-                        f"**Mod:** {mod.mention if mod else 'Unknown'}")
+                        f"**Mod:** <@{mod}>")
 
         em = discord.Embed(colour=RED, timestamp=utc_now(), description="")
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
@@ -258,24 +258,35 @@ class Moderation(commands.Cog):
 
     @commands.command(aliases=["unwarn"])
     @commands.has_role(MOD_ID)
-    async def removecase(self, ctx, case_number):
+    async def removecase(self, ctx, member: discord.Member, case_number):
         """
         Remove a case by its case #
         """
-        if not re.match(r"[0-9]{4}", case_number):
+        if not re.fullmatch(r"[0-9]{4}", case_number):
             raise commands.BadArgument
 
-        result = await del_doc(case_number, "mod_logs")
+        case = await find_docs("mod_logs", {"case": case_number, "user": str(member.id)}, 1)
 
-        case = result.raw_result
+        if case:
+            case = case[0]
+        else:
+            em = discord.Embed(colour=RED, title=f"🔍 Case #{case_number} not found", timestamp=utc_now())
+            em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+            return await ctx.send(embed=em)
+
+        await del_doc(case["_id"], "mod_logs")
+
+        log_type = case["type"]
         reason = case["reason"]
         timestamp = discord.utils.format_dt(case["timestamp"])
-        mod = await ctx.guild.try_member(case["mod"])
+        mod = case["mod"]
 
-        em = discord.Embed(colour=RED, timestamp=utc_now())
-        em.description = f"**Reason:** {reason}\n" \
+        em = discord.Embed(colour=RED, timestamp=utc_now(), title=f"🗑️ Removed case #{case_number}")
+        em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+        em.description = f"**{log_type.title()}**\n" \
+                         f"**Reason:** {reason}\n" \
                          f"**Timestamp:** {timestamp}\n" \
-                         f"**Mod:** {mod.mention if mod else 'Unknown'}"
+                         f"**Mod:** <@{mod}>"
         await ctx.send(embed=em)
 
 
