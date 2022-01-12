@@ -12,7 +12,7 @@ import re
 EMBED_DESC_LIMIT = 4096
 
 
-async def add_modlog(user: discord.Member, mod: discord.Member, log_type: str, reason: str,
+async def add_modlog(user: Union[discord.Member, discord.User], mod: discord.Member, log_type: str, reason: str,
                      duration: dt.timedelta = None):
     if duration:
         duration = duration.total_seconds()
@@ -175,33 +175,39 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.has_role(MOD_ID)
-    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason=None):
+    async def ban(self, ctx: commands.Context, user: Union[discord.Member, discord.User], *, reason=None):
         """
         Ban a user (currently only perma ban)
         """
-        if not await can_moderate_user(ctx, member):
-            return
-
-        em = discord.Embed(color=RED, timestamp=utc_now())
-        em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
-        em.description = f"You have been banned for \n```{reason}```"
         can_dm = True
-        try:
-            await member.send(embed=em)
-        except discord.Forbidden:
+        if isinstance(user, discord.Member):
+            if not await can_moderate_user(ctx, user):
+                return
+
+            em = discord.Embed(color=RED, timestamp=utc_now())
+            em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
+            em.description = f"You have been banned for \n```{reason}```"
+            try:
+                await user.send(embed=em)
+            except discord.Forbidden:
+                can_dm = False
+        else:  # discord.User
             can_dm = False
 
-        await member.ban(reason=reason)
-        case_num = await add_modlog(member, ctx.author, "ban", reason)
+        await ctx.guild.ban(user, reason=reason)
+
+        case_num = await add_modlog(user, ctx.author, "ban", reason)
 
         em = discord.Embed(color=RED, timestamp=utc_now())
-        em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-        em.description = f"{member.mention} was banned by {ctx.author.mention} for:\n```{reason}```"
+        em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+        em.description = f"{user.mention} was banned by {ctx.author.mention}" + \
+                         (f" for:\n```{reason}```" if reason else "")
         em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
         await ctx.send(embed=em)
 
-        await self.mod_action_embed(author=ctx.author, target=member,
-                                    desc=f"**Banned {member.mention} for:**\n```{reason}```")
+        await self.mod_action_embed(author=ctx.author, target=user,
+                                    desc=f"**Banned {user.mention}**" + (f" **for:**\n```{reason}```" if reason else "")
+                                    )
 
     @commands.command()
     @commands.has_role(MOD_ID)
@@ -217,7 +223,7 @@ class Moderation(commands.Cog):
         em.set_footer(text=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
         await ctx.send(embed=em)
 
-        await self.mod_action_embed(author=ctx.author, target=user, title=f"👼 Unbanned {user.mention}")
+        await self.mod_action_embed(author=ctx.author, target=user, desc=f"👼 **Unbanned** {user.mention}")
 
     @commands.command()
     @commands.has_role(MOD_ID)
