@@ -2,6 +2,16 @@ from discord.ext import commands
 import discord
 from config import GUILD_ID
 
+
+PRONOUNS_DIVIDER = 931027735474753556
+PRONOUNS_VIEW = {
+    "he/him": {"roleId": 931028572083216444},
+    "she/her": {"roleId": 931028641654132816},
+    "they/them": {"roleId": 931028678396227594},
+    "Any": {"roleId": 931029765794717776},
+    "Other/Ask me": {"roleId": 931028748973768825},
+}
+
 LANG_DIVIDER = 928718017678958613
 LANGUAGE_VIEW = {
     "C": {"roleId": 927942745639780432, "emoji": "c_:927947447425204304"},
@@ -79,13 +89,25 @@ async def role_callback(view_data, divider: int,
     await interaction.channel.purge(limit=1)  # Deletes interaction message once done
 
 
+class PronounsReactView(discord.ui.View):
+    def __init__(self, ctx: commands.Context):
+        super().__init__()
+        self.ctx = ctx
+
+    @discord.ui.select(custom_id="Pronoun Reaction Menu", placeholder="Please Select Your Pronouns.",
+                       min_values=1, max_values=len(PRONOUNS_VIEW),
+                       options=[discord.SelectOption(label=name) for name in PRONOUNS_VIEW.keys()])
+    async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
+        await role_callback(PRONOUNS_VIEW, PRONOUNS_DIVIDER, self.ctx, select, interaction)
+
+
 class LangReactView(discord.ui.View):
     def __init__(self, ctx: commands.Context):
         super().__init__()
         self.ctx = ctx
 
     @discord.ui.select(custom_id="Language Reaction Menu", placeholder="Please Select Your Languages.",
-                       min_values=1, max_values=12,
+                       min_values=1, max_values=len(LANGUAGE_VIEW),
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
                                 for name, value in LANGUAGE_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
@@ -98,7 +120,7 @@ class InterestsReactView(discord.ui.View):
         self.ctx = ctx
 
     @discord.ui.select(custom_id="Interest Reaction Menu", placeholder="Please Select Your Interest.",
-                       min_values=1, max_values=5,
+                       min_values=1, max_values=len(INTEREST_VIEW),
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
                                 for name, value in INTEREST_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
@@ -111,7 +133,7 @@ class OSReactView(discord.ui.View):
         self.ctx = ctx
 
     @discord.ui.select(custom_id="Operating System Reaction Menu", placeholder="Please Select Your Operating Systems.",
-                       min_values=1, max_values=6,
+                       min_values=1, max_values=len(OS_VIEW),
                        options=[discord.SelectOption(label=name, emoji=value["emoji"])
                                 for name, value in OS_VIEW.items()])
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
@@ -124,21 +146,28 @@ class ReactionCreate(commands.Cog):
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[GUILD_ID])
-    async def langrole(self, ctx: commands.Context):
+    async def pronounroles(self, ctx: commands.Context):
+        """Creates a role picker for your pronouns"""
+        await ctx.message.delete(delay=2)  # Deletes command in chat
+        await ctx.send("Please select your pronouns roles below.", view=PronounsReactView(ctx))
+
+    @commands.command(message_command=False, slash_command=True, ephemeral=True,
+                      slash_command_guilds=[GUILD_ID])
+    async def langroles(self, ctx: commands.Context):
         """Creates a role picker for programming languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
         await ctx.send("Please select from the language roles below.", view=LangReactView(ctx))
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[GUILD_ID])
-    async def interestrole(self, ctx: commands.Context):
+    async def interestroles(self, ctx: commands.Context):
         """Creates a role picker for interests"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
         await ctx.send("Please select from the interest roles below.", view=InterestsReactView(ctx))
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[GUILD_ID])
-    async def osrole(self, ctx: commands.Context):
+    async def osroles(self, ctx: commands.Context):
         """Creates a role picker for operating systems"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
         await ctx.send("Please select from the OS roles below.", view=OSReactView(ctx))
