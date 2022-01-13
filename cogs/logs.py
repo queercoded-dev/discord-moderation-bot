@@ -43,7 +43,7 @@ class Log(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
-        if message.guild.id != GUILD_ID:
+        if not message.guild or message.guild.id != GUILD_ID:
             return
         if message.author.bot:  # ignore bots
             return
@@ -62,7 +62,7 @@ class Log(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_edit(self, old_message: discord.Message, message: discord.Message):
-        if message.guild.id != GUILD_ID:
+        if not message.guild or message.guild.id != GUILD_ID:
             return
         if message.author.bot:  # ignore bots
             return

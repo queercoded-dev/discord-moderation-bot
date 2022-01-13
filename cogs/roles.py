@@ -2,7 +2,6 @@ from discord.ext import commands
 import discord
 from config import GUILD_ID
 
-
 PRONOUNS_DIVIDER = 931027735474753556
 PRONOUNS_VIEW = {
     "he/him": {"roleId": 931028572083216444},
@@ -49,98 +48,53 @@ OS_VIEW = {
 }
 
 
-async def role_callback(view_data, divider: int,
-                        ctx: commands.Context, select: discord.ui.Select, interaction: discord.Interaction):
-    added_roles = []
-    removed_roles = []
-    author_roles = [x.id for x in ctx.author.roles]
-
-    # Assign or remove roles as needed
-    for selection in select.values:
-        role_id = view_data[selection]["roleId"]
-        role = ctx.guild.get_role(role_id)
-        if role_id in author_roles:
-            await ctx.author.remove_roles(role, reason="Reaction role.")
-            author_roles.remove(role_id)  # list needs to be updated to reflect changes
-            removed_roles.append(selection)
-        else:
-            await ctx.author.add_roles(role, reason="Reaction role.")
-            author_roles.append(role_id)
-            added_roles.append(selection)
-
-    # Check if divider role needs to be assigned
-    has_role_in_category = False
-    for value in view_data.values():
-        if value["roleId"] in author_roles:
-            has_role_in_category = True
-            break
-
-    # Assign divider if needed
-    divider_role = ctx.guild.get_role(divider)
-    if has_role_in_category and divider not in author_roles:
-        await ctx.author.add_roles(divider_role, reason="Divider role.")
-    elif not has_role_in_category and divider in author_roles:
-        await ctx.author.remove_roles(divider_role, reason="Divider role.")
-
-    # Respond with selection
-    added_roles = ", ".join(added_roles) if added_roles else "None"
-    removed_roles = ", ".join(removed_roles) if removed_roles else "None"
-    await interaction.response.send_message(f"Added: {added_roles}\nRemoved: {removed_roles}", ephemeral=True)
-    await interaction.channel.purge(limit=1)  # Deletes interaction message once done
-
-
-class PronounsReactView(discord.ui.View):
-    def __init__(self, ctx: commands.Context):
+class View(discord.ui.View):
+    def __init__(self, items):
         super().__init__()
+        self.add_item(items)
+
+
+class RoleDropdown(discord.ui.Select):
+    def __init__(self, view, divider: int, ctx: commands.Context):
+        self.role_view = view
+        self.divider = divider
         self.ctx = ctx
 
-    @discord.ui.select(custom_id="Pronoun Reaction Menu", placeholder="Please Select Your Pronouns.",
-                       min_values=1, max_values=len(PRONOUNS_VIEW),
-                       options=[discord.SelectOption(label=name) for name in PRONOUNS_VIEW.keys()])
-    async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
-        await role_callback(PRONOUNS_VIEW, PRONOUNS_DIVIDER, self.ctx, select, interaction)
+        roles = [x.id for x in ctx.author.roles]
+        options = [
+            discord.SelectOption(label=name, default=value["roleId"] in roles,
+                                 emoji=value["emoji"] if "emoji" in value else None)
+            for name, value in view.items()
+        ]
+
+        super().__init__(placeholder="Select your roles", options=options,
+                         min_values=0, max_values=len(view))
+
+    async def callback(self, interaction: discord.Interaction):
+        member = self.ctx.guild.get_member(self.ctx.author.id)  # Ensure the member object is up to date
+
+        # Add or remove roles as needed
+        for name, value in self.role_view.items():
+            role_id = value["roleId"]
+            role = self.ctx.guild.get_role(role_id)
+
+            if name in self.values and role not in member.roles:  # role is selected and not assigned yet
+                await self.ctx.author.add_roles(role, reason="Reaction role.")
+            elif name not in self.values and role in member.roles:  # Not selected and is assigned
+                await self.ctx.author.remove_roles(role, reason="Reaction role.")
+
+        # Assign divider if needed
+        divider_role = self.ctx.guild.get_role(self.divider)
+        if self.values and divider_role not in member.roles:
+            await self.ctx.author.add_roles(divider_role, reason="Divider role.")
+        elif not self.values and divider_role in member.roles:
+            await self.ctx.author.remove_roles(divider_role, reason="Divider role.")
+
+        # Respond with selection
+        await interaction.response.send_message("Updated roles!", ephemeral=True)
 
 
-class LangReactView(discord.ui.View):
-    def __init__(self, ctx: commands.Context):
-        super().__init__()
-        self.ctx = ctx
-
-    @discord.ui.select(custom_id="Language Reaction Menu", placeholder="Please Select Your Languages.",
-                       min_values=1, max_values=len(LANGUAGE_VIEW),
-                       options=[discord.SelectOption(label=name, emoji=value["emoji"])
-                                for name, value in LANGUAGE_VIEW.items()])
-    async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
-        await role_callback(LANGUAGE_VIEW, LANG_DIVIDER, self.ctx, select, interaction)
-
-
-class InterestsReactView(discord.ui.View):
-    def __init__(self, ctx: commands.Context):
-        super().__init__()
-        self.ctx = ctx
-
-    @discord.ui.select(custom_id="Interest Reaction Menu", placeholder="Please Select Your Interest.",
-                       min_values=1, max_values=len(INTEREST_VIEW),
-                       options=[discord.SelectOption(label=name, emoji=value["emoji"])
-                                for name, value in INTEREST_VIEW.items()])
-    async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
-        await role_callback(INTEREST_VIEW, INTEREST_DIVIDER, self.ctx, select, interaction)
-
-
-class OSReactView(discord.ui.View):
-    def __init__(self, ctx: commands.Context):
-        super().__init__()
-        self.ctx = ctx
-
-    @discord.ui.select(custom_id="Operating System Reaction Menu", placeholder="Please Select Your Operating Systems.",
-                       min_values=1, max_values=len(OS_VIEW),
-                       options=[discord.SelectOption(label=name, emoji=value["emoji"])
-                                for name, value in OS_VIEW.items()])
-    async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
-        await role_callback(OS_VIEW, OS_DIVIDER, self.ctx, select, interaction)
-
-
-class ReactionCreate(commands.Cog):
+class Roles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
 
@@ -149,29 +103,33 @@ class ReactionCreate(commands.Cog):
     async def pronounroles(self, ctx: commands.Context):
         """Creates a role picker for your pronouns"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        await ctx.send("Please select your pronouns roles below.", view=PronounsReactView(ctx))
+        view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, ctx))
+        await ctx.send("Please select your pronouns roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[GUILD_ID])
     async def langroles(self, ctx: commands.Context):
         """Creates a role picker for programming languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        await ctx.send("Please select from the language roles below.", view=LangReactView(ctx))
+        view = View(RoleDropdown(LANGUAGE_VIEW, LANG_DIVIDER, ctx))
+        await ctx.send("Please select from the language roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[GUILD_ID])
     async def interestroles(self, ctx: commands.Context):
         """Creates a role picker for interests"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        await ctx.send("Please select from the interest roles below.", view=InterestsReactView(ctx))
+        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, ctx))
+        await ctx.send("Please select from the interest roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[GUILD_ID])
     async def osroles(self, ctx: commands.Context):
         """Creates a role picker for operating systems"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        await ctx.send("Please select from the OS roles below.", view=OSReactView(ctx))
+        view = View(RoleDropdown(OS_VIEW, OS_DIVIDER, ctx))
+        await ctx.send("Please select from the OS roles below.", view=view, ephemeral=True)
 
 
 def setup(bot):
-    bot.add_cog(ReactionCreate(bot))
+    bot.add_cog(Roles(bot))
