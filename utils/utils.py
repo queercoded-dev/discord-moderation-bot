@@ -16,11 +16,34 @@ def chunks(lst: list, n: int):
         yield lst[i:i + n]
 
 
-class PageView(discord.ui.View):
-    def __init__(self, page, ctx: commands.Context):
+class Page(discord.ui.View):
+    """
+    A UI view that lets you scroll through pages
+    """
+
+    def __init__(self, ctx: commands.Context, pages: list, index: int = 0, footer: str = None):
         super().__init__()
-        self.page = page  # type: Page
+
+        self.pages = pages
+        self.index = index
         self.ctx = ctx
+        self.footer = footer
+        self.max_page = len(pages)
+
+    def set_embed_footer(self, embed: discord.Embed):
+        text = f"Page {self.index + 1} of {self.max_page}"
+        if self.footer:
+            text = self.footer + "\n" + text
+
+        embed = embed.set_footer(text=text, icon_url=embed.footer.icon_url)
+        return embed
+
+    async def update(self, interaction: discord.Interaction):
+        embed = self.pages[self.index]
+        embed = self.set_embed_footer(embed)
+        await interaction.response.edit_message(embed=embed)
+
+    # Interaction stuff
 
     async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user.id == self.ctx.author.id:
@@ -30,81 +53,38 @@ class PageView(discord.ui.View):
                                                     ephemeral=True)
             return False
 
-    async def on_timeout(self):
-        await self.page.stop()
-
     @discord.ui.button(emoji="⏮️")
-    async def first(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await self.page.first_page()
+    async def first_page(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if self.index != 0:
+            self.index = 0
+            await self.update(interaction)
 
     @discord.ui.button(emoji="◀️")
-    async def back(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await self.page.prev_page()
-
-    @discord.ui.button(emoji="▶️")
-    async def next(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await self.page.next_page()
-
-    @discord.ui.button(emoji="⏭️")
-    async def last(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await self.page.last_page()
-
-
-class Page:
-    """
-    A class to create a scrollable menu
-    """
-    def __init__(self, ctx: commands.Context, msg: discord.Message, pages: list, footer: str = None):
-        self.pages = pages
-        self.index = 0
-        self.ctx = ctx
-        self.msg = msg
-        self.max_page = len(pages)
-        self.footer = footer
-
-    def _set_embed_footer(self, embed: discord.Embed):
-        text = f"Page {self.index + 1} of {self.max_page}"
-        if self.footer:
-            text = self.footer + "\n" + text
-
-        embed = embed.set_footer(text=text, icon_url=embed.footer.icon_url)
-        return embed
-
-    async def update(self):
-        embed = self.pages[self.index]
-        embed = self._set_embed_footer(embed)
-        await self.msg.edit(embed=embed)
-
-    async def first_page(self):
-        self.index = 0
-        await self.update()
-
-    async def last_page(self):
-        self.index = self.max_page - 1
-        await self.update()
-
-    async def next_page(self):
-        self.index += 1
-        if self.index >= self.max_page:
-            self.index = 0
-        await self.update()
-
-    async def prev_page(self):
+    async def prev_page(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.index -= 1
         if self.index < 0:
             self.index = self.max_page - 1
-        await self.update()
+        await self.update(interaction)
 
-    async def stop(self):
+    @discord.ui.button(emoji="▶️")
+    async def next_page(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.index += 1
+        if self.index >= self.max_page:
+            self.index = 0
+        await self.update(interaction)
+
+    @discord.ui.button(emoji="⏭️")
+    async def last_page(self, button: discord.ui.Button, interaction: discord.Interaction):
+        new_index = self.max_page - 1
+        if self.index != new_index:
+            self.index = new_index
+            await self.update(interaction)
+
+    async def on_timeout(self):
         try:
-            await self.msg.edit(content="`Page menu is locked`", view=None)
+            self.stop()
         except discord.NotFound:
             pass
-
-    async def start(self):
-        if len(self.pages) > 1:
-            await self.update()
-            await self.msg.edit(view=PageView(self, self.ctx))  # Add the pages
 
 
 def pos_int(digit: str):

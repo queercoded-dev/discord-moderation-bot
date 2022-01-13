@@ -130,10 +130,9 @@ class Help(commands.Cog, name="Meta"):
                 page = pages[0]
 
             # Create message and start pagination
-            msg = await ctx.send(embed=page)
-            paginator = Page(ctx, msg, pages, footer=pages[0].footer.text)
-            paginator.index = pages.index(page)  # start at the specified page
-            await paginator.start()
+            view = Page(ctx, pages, footer=pages[0].footer.text, index=pages.index(page))
+            page = view.set_embed_footer(page)
+            await ctx.send(embed=page, view=view)
 
         else:  # if a command is passed
             command = self.bot.get_command(command)
