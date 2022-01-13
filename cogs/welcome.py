@@ -1,9 +1,13 @@
 from discord.ext import commands
 import discord
+from config import GUILD_ID, WELCOME_IMAGE_ID, MEMBER_ID
+from utils import utc_now
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-from config import GUILD_ID, WELCOME_IMAGE_ID, MEMBER_ID
-from asyncio import sleep
+import asyncio
+
+
+MEMBER_ROLE_DELAY = 2 * 60 * 60  # 2 hours
 
 WELCOME_BG = "./Join.png"
 LEAVE_BG = "./Leave.png"
@@ -122,6 +126,8 @@ class WelcomeImage(commands.Cog):
         image = make_welcome(BytesIO(image), member)
         await self.send_image(image)
 
+        await self.task(member.id, MEMBER_ROLE_DELAY)
+
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         if member.guild.id != GUILD_ID:
@@ -129,9 +135,28 @@ class WelcomeImage(commands.Cog):
         image = await get_pfp(member)
         image = make_leave(BytesIO(image), member)
         await self.send_image(image)
-        await sleep(7200)  # Sleeps for 2 hours
-        role = member.guild.get_role(MEMBER_ID)
-        await member.add_roles(role, reason="MemberRole")
+
+    async def task(self, user_id: int, delay: float):
+        await asyncio.sleep(delay)
+        await self.bot.wait_until_ready()
+
+        guild = self.bot.get_guild(GUILD_ID)
+        member = guild.get_member(user_id)
+        if member:
+            role = guild.get_role(MEMBER_ID)
+            await member.add_roles(role, reason="Member Role")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        # Figure out which members do not have the role
+        guild = self.bot.get_guild(GUILD_ID)
+        role = guild.get_role(MEMBER_ID)
+
+        for member in guild.members:
+            if not member.bot and role not in member.roles:
+                delay = MEMBER_ROLE_DELAY - (utc_now() - member.joined_at).total_seconds()
+
+                asyncio.create_task(self.task(member.id, delay))
 
 
 def setup(bot):
