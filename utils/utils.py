@@ -2,7 +2,6 @@ from math import ceil
 
 import discord
 from discord.ext import commands
-from asyncio import TimeoutError
 import re
 import datetime as dt
 
@@ -17,14 +16,44 @@ def chunks(lst: list, n: int):
         yield lst[i:i + n]
 
 
-nav_emotes = ["⏮️", "◀️", "▶️", "⏭️"]
+class PageView(discord.ui.View):
+    def __init__(self, page, ctx: commands.Context):
+        super().__init__()
+        self.page = page  # type: Page
+        self.ctx = ctx
+
+    async def interaction_check(self, interaction: discord.Interaction):
+        if interaction.user.id == self.ctx.author.id:
+            return True
+        else:
+            await interaction.response.send_message(content="Run this command yourself to see more pages",
+                                                    ephemeral=True)
+            return False
+
+    async def on_timeout(self):
+        await self.page.stop()
+
+    @discord.ui.button(emoji="⏮️")
+    async def first(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.page.first_page()
+
+    @discord.ui.button(emoji="◀️")
+    async def back(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.page.prev_page()
+
+    @discord.ui.button(emoji="▶️")
+    async def next(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.page.next_page()
+
+    @discord.ui.button(emoji="⏭️")
+    async def last(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.page.last_page()
 
 
 class Page:
     """
     A class to create a scrollable menu
     """
-
     def __init__(self, ctx: commands.Context, msg: discord.Message, pages: list, footer: str = None):
         self.pages = pages
         self.index = 0
@@ -68,42 +97,14 @@ class Page:
 
     async def stop(self):
         try:
-            await self.msg.clear_reactions()
-            await self.msg.edit(content="`Page menu is locked`")
+            await self.msg.edit(content="`Page menu is locked`", view=None)
         except discord.NotFound:
             pass
-
-    async def setup(self):
-        for i in nav_emotes:
-            try:
-                await self.msg.add_reaction(i)
-            except discord.NotFound:
-                return
-
-    def _check(self, r: discord.Reaction, user: discord.User):
-        return user.id == self.ctx.author.id and str(r) in nav_emotes and self.msg.id == r.message.id
 
     async def start(self):
         if len(self.pages) > 1:
             await self.update()
-            await self.setup()
-            while 1:
-                try:
-                    react, user = await self.ctx.bot.wait_for("reaction_add", timeout=60, check=self._check)
-                    await self.msg.remove_reaction(react, user)
-                except TimeoutError:
-                    break
-
-                if str(react) == nav_emotes[0]:
-                    await self.first_page()
-                elif str(react) == nav_emotes[1]:
-                    await self.prev_page()
-                elif str(react) == nav_emotes[2]:
-                    await self.next_page()
-                elif str(react) == nav_emotes[3]:
-                    await self.last_page()
-
-            await self.stop()
+            await self.msg.edit(view=PageView(self, self.ctx))  # Add the pages
 
 
 def pos_int(digit: str):
