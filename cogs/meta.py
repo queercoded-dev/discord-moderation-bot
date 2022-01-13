@@ -180,6 +180,11 @@ class Help(commands.Cog, name="Meta"):
         msg = f"Pong!\nDiscord latency: {self.bot.latency * 1000:.0f}ms\nBot Latency: {duration:.0f}ms"
         await message.edit(content=msg)
 
+    @commands.Cog.listener()
+    async def on_thread_join(self, thread: discord.Thread):
+        if not thread.me:
+            await thread.join()
+
 
 def setup(bot):
     bot.add_cog(Help(bot))
