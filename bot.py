@@ -17,7 +17,7 @@ class Bot(commands.Bot):
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"for errors..."))
 
         channel = self.get_channel(LOG_ID)
-        # await channel.send(f"<@114352655857483782> - restart detected.")
+        await channel.send(f"<@114352655857483782> - restart detected.")
 
 
 intents = discord.Intents.all()
