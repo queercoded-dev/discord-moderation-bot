@@ -42,9 +42,9 @@ OS_VIEW = {
     "Arch": {"roleId": 928737067851206696, "emoji": "arch:927947448788353104"},
     "BSD": {"roleId": 928780279802372136, "emoji": "bsd:927947447139958795"},
     "Debian/Ubuntu": {"roleId": 928736847755116574, "emoji": "debian:927947446875734096"},
+    "Fedora/RedHat": {"roleId": 928736994643837038, "emoji": "fedora:927947448301785130"},
     "Linux": {"roleId": 928722740821753937, "emoji": "linux:927948388853506138"},
     "MacOS": {"roleId": 928722779161890816, "emoji": "apple:927947449170026496"},
-    "Fedora/RedHat": {"roleId": 928736994643837038, "emoji": "fedora:927947448301785130"},
     "Windows": {"roleId": 928722827765481502, "emoji": "windows:927947446565371904"},
 }
 
