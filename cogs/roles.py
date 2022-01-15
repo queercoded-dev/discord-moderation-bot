@@ -30,11 +30,11 @@ LANGUAGE_VIEW = {
 
 INTEREST_DIVIDER = 928722640867319859
 INTEREST_VIEW = {
-    "3D Printing": {"roleId": 928723382751592518, "emoji": "3dprinting:928790227248635945"},
-    "Circuits": {"roleId": 928724312502988820, "emoji": "transistor:927947446791831602"},
-    "Cyber Security": {"roleId": 928724530673901669, "emoji": "firewall:928790564953010266"},
-    "Networking": {"roleId": 928785182406873188, "emoji": "router:928791011675762798"},
-    "Programming": {"roleId": 928786544440000522, "emoji": "code:928786531081150495"},
+    "3D Printing": {"roleId": 928723382751592518, "emoji": "3dprinting:931974624747610222"},
+    "Circuits": {"roleId": 928724312502988820, "emoji": "transistor:931974800795127898"},
+    "Cyber Security": {"roleId": 928724530673901669, "emoji": "firewall:931974706855292948"},
+    "Networking": {"roleId": 928785182406873188, "emoji": "router:931974766003376159"},
+    "Programming": {"roleId": 928786544440000522, "emoji": "code:931974691537711104"},
 }
 
 OS_DIVIDER = 928737228539174992
@@ -44,7 +44,7 @@ OS_VIEW = {
     "Debian/Ubuntu": {"roleId": 928736847755116574, "emoji": "debian:927947446875734096"},
     "Fedora/RedHat": {"roleId": 928736994643837038, "emoji": "fedora:927947448301785130"},
     "Linux": {"roleId": 928722740821753937, "emoji": "linux:927948388853506138"},
-    "MacOS": {"roleId": 928722779161890816, "emoji": "apple:927947449170026496"},
+    "MacOS": {"roleId": 928722779161890816, "emoji": "apple:931974640455274506"},
     "Windows": {"roleId": 928722827765481502, "emoji": "windows:927947446565371904"},
 }
 
