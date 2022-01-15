@@ -52,7 +52,6 @@ async def help_embed(ctx: commands.Context, bot: commands.Bot, command: commands
 class Help(commands.Cog, name="Meta"):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
-        self.start_time = dt.datetime.now()
 
     @commands.command(aliases=["commands"], hidden=True)
     async def help(self, ctx: commands.Context, *, command=""):
@@ -152,11 +151,6 @@ class Help(commands.Cog, name="Meta"):
 
             em = await help_embed(ctx, self.bot, command)  # send help embed for that command
             await ctx.send(embed=em)
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.start_time = dt.datetime.utcnow()
-
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.content == f"<@{self.bot.user.id}> " or message.content == f"<@!{self.bot.user.id}> ":
