@@ -3,11 +3,13 @@ from discord.ext import commands
 from config import MOD_ID, RED, YELLOW, LOG_ID
 from cogs.logs import MODERATION
 from utils.utils import pos_int, RelativeTime, format_time, utc_now
-from utils.db_utils import insert_doc, find_docs, del_doc, get_doc
+from utils.db_utils import insert_doc, find_docs, del_doc
 import datetime as dt
 from typing import Union
 from random import randint
 import re
+from config import GREEN
+from argparse import ArgumentParser, ArgumentTypeError
 
 EMBED_DESC_LIMIT = 4096
 
@@ -50,6 +52,23 @@ async def can_moderate_user(ctx: commands.Context, member: discord.Member):
         return False
 
     return True
+
+
+class CmdArgParser(ArgumentParser):
+    def __init__(self):
+        super().__init__(allow_abbrev=False, exit_on_error=False, add_help=False)
+
+    def error(self, message):
+        raise commands.BadArgument
+
+
+def bool_arg(value):
+    if value.lower() == "true":
+        return True
+    elif value.lower() == "false":
+        return False
+    else:
+        raise ArgumentTypeError
 
 
 class Moderation(commands.Cog):
@@ -296,6 +315,36 @@ class Moderation(commands.Cog):
                          f"**Timestamp:** {timestamp}\n" \
                          f"**Mod:** <@{mod}>"
         await ctx.send(embed=em)
+
+    @commands.command(aliases=["osem"])
+    @commands.has_role(MOD_ID)
+    async def embed(self, ctx, channel: discord.TextChannel, title, description, *args):
+        """
+        Quick embed t.osem <channel> "<title>" "<description>" *args*
+
+        Args:
+        --colour - The embed colour, defaults to mint green
+        --timestamp True/False - Whether to add a timestamp, defaults to true
+        --footer True/False - Whether to include the embed footer, defaults to true
+        """
+        parser = CmdArgParser()
+        parser.add_argument("--colour", "-c", "--color")
+        parser.add_argument("--timestamp", "-t", type=bool_arg, default=True)
+        parser.add_argument("--footer", "-f", type=bool_arg, default=True)
+        parsed = parser.parse_args(args)
+
+        if parsed.colour:
+            colour = await commands.ColourConverter().convert(ctx, parsed.colour)
+        else:
+            colour = GREEN
+
+        title = str.strip(title)
+        embed = discord.Embed(title=title, description=description, colour=colour)
+        if parsed.footer:
+            embed.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
+        if parsed.timestamp:
+            embed.timestamp = utc_now()
+        await channel.send(embed=embed)
 
 
 def setup(bot):
