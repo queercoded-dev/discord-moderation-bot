@@ -1,6 +1,6 @@
 import discord
-from discord.ext import commands
-from config import MOD_ID, RED, YELLOW, LOG_ID
+from discord.ext import commands, tasks
+from config import MOD_ID, RED, YELLOW, LOG_ID, GUILD_ID
 from cogs.logs import MODERATION
 from utils.utils import pos_int, RelativeTime, format_time, utc_now
 from utils.db_utils import insert_doc, find_docs, del_doc
@@ -74,6 +74,7 @@ def bool_arg(value):
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
+        self.unban_loop.start()
 
     async def mod_action_embed(self, title=discord.Embed.Empty, desc=discord.Embed.Empty,
                                author: discord.Member = None, target: Union[discord.Member, discord.User] = None,
@@ -194,9 +195,10 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.has_role(MOD_ID)
-    async def ban(self, ctx: commands.Context, user: Union[discord.Member, discord.User], *, reason=None):
+    async def ban(self, ctx: commands.Context, user: Union[discord.Member, discord.User],
+                  duration: commands.Greedy[RelativeTime], *, reason=None):
         """
-        Ban a user (currently only perma ban)
+        Ban a user
         """
         can_dm = True
         if isinstance(user, discord.Member):
@@ -215,17 +217,34 @@ class Moderation(commands.Cog):
 
         await ctx.guild.ban(user, reason=reason)
 
-        case_num = await add_modlog(user, ctx.author, "ban", reason)
+        if duration:
+            duration_delta = dt.timedelta(minutes=sum(duration))
+            end_time = utc_now() + duration_delta
+            duration_str = format_time(duration_delta)
+            dynamic_str = discord.utils.format_dt(end_time, "R")
+
+            await insert_doc("pending", {
+                "user": str(user.id),
+                "timestamp": end_time,
+                "type": "ban",
+            })
+            self.unban_loop.start()
+
+        case_num = await add_modlog(user, ctx.author, "ban", reason, duration=duration_delta if duration else None)
 
         em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
         em.description = f"{user.mention} was banned by {ctx.author.mention}" + \
                          (f" for:\n```{reason}```" if reason else "")
         em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
+        if duration:
+            em.add_field(name="Duration", value=duration_str)
         await ctx.send(embed=em)
 
         await self.mod_action_embed(author=ctx.author, target=user,
-                                    desc=f"**Banned {user.mention}**" + (f" **for:**\n```{reason}```" if reason else "")
+                                    desc=f"**Banned {user.mention}**" +
+                                         (f" **for:**\n```{reason}```" if reason else ""),
+                                    fields={"Duration": duration_str, "Unban": dynamic_str} if duration else None,
                                     )
 
     @commands.command()
@@ -345,6 +364,27 @@ class Moderation(commands.Cog):
         if parsed.timestamp:
             embed.timestamp = utc_now()
         await channel.send(embed=embed)
+
+    @tasks.loop(minutes=5)
+    async def unban_loop(self):
+        await self.bot.wait_until_ready()
+        guild = self.bot.get_guild(GUILD_ID)
+
+        # Get all pending bans
+        pending_bans = await find_docs("pending", {"type": "ban"})
+
+        for ban in pending_bans:
+            _id = ban["_id"]
+            user_id = int(ban["user"])
+            timestamp = ban["timestamp"]
+
+            if timestamp < utc_now():
+                await guild.unban(discord.Object(user_id), reason="Temp ban")
+
+                await del_doc(_id, "pending")
+
+        if not pending_bans:  # Don't bother running the loop if there are no bans
+            self.unban_loop.stop()
 
 
 def setup(bot):
