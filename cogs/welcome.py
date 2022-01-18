@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from config import GUILD_ID, WELCOME_IMAGE_ID, MEMBER_ID
+from config import GUILD_ID, WELCOME_ID, MEMBER_ID
 from utils import utc_now
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
@@ -117,7 +117,7 @@ class WelcomeImage(commands.Cog):
         image.save(image_b, format='png')
         image_b.seek(0)
 
-        channel = self.bot.get_channel(WELCOME_IMAGE_ID)
+        channel = self.bot.get_channel(WELCOME_ID)
         await channel.send(file=discord.File(image_b, filename=filename))
 
     @commands.Cog.listener()
