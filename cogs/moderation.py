@@ -337,7 +337,7 @@ class Moderation(commands.Cog):
 
     @commands.command(aliases=["osem"])
     @commands.has_role(MOD_ID)
-    async def embed(self, ctx, channel: discord.TextChannel, title, description, *args):
+    async def embed(self, ctx: commands.Context, channel: discord.TextChannel, title, description, *args):
         """
         Quick embed t.osem <channel> "<title>" "<description>" *args*
 
@@ -385,6 +385,39 @@ class Moderation(commands.Cog):
 
         if not pending_bans:  # Don't bother running the loop if there are no bans
             self.unban_loop.stop()
+
+    @commands.command(aliases=["modnote", "note"])
+    @commands.has_role(MOD_ID)
+    async def addnote(self, ctx: commands.Context, user: Union[discord.Member, discord.User], *, note):
+        """
+        Add a note to the given user
+        """
+        await add_modlog(user, ctx.author, "note", note)
+
+        em = discord.Embed(color=RED, timestamp=utc_now())
+        em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+        em.description = f"Note added to {user.mention}:\n```{note}```"
+        await ctx.send(embed=em)
+
+    @commands.command(aliases=["banpurge", "purgeban", "userpurge"])
+    @commands.has_role(MOD_ID)
+    async def purgeuser(self, ctx: commands.Context, user: discord.User, days: pos_int = 1):
+        """
+        Purge a user's messages via a ban. The user will remained banned after this command is run
+        This applies to all channels in the server
+        Days must be between 1 and 7. Default is 1
+        """
+        if days < 1 or days > 7:
+            return await ctx.reply("`days` must be between 1 and 7")
+
+        await ctx.guild.ban(user, reason="Purge messages", delete_message_days=days)
+
+        plural = f"{days} days" if days > 1 else "day"
+        em = discord.Embed(colour=RED,
+                           description=f"{ctx.author.mention} purged all messages by {user.mention} in the last {plural}",
+                           timestamp=utc_now())
+        em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+        await ctx.send(embed=em)
 
 
 def setup(bot):
