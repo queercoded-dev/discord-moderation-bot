@@ -34,7 +34,7 @@ INTEREST_VIEW = {
     "Circuits": {"roleId": 928724312502988820, "emoji": "transistor:931974800795127898"},
     "Cyber Security": {"roleId": 928724530673901669, "emoji": "firewall:931974706855292948"},
     "Networking": {"roleId": 928785182406873188, "emoji": "router:931974766003376159"},
-    "Programming": {"roleId": 928786544440000522, "emoji": "code:931974691537711104"},
+    "Programming": {"roleId": 928786544440000522, "emoji": "code:932828643951001670"},
 }
 
 OS_DIVIDER = 928737228539174992
