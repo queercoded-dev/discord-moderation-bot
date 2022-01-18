@@ -47,6 +47,7 @@ def make_welcome(pfp: BytesIO, member: discord.Member):
     bg = bg.resize((1024, 415))  # resize
 
     pfp = Image.open(pfp)  # make the pfp a PIL Image
+    pfp = pfp.convert("RGBA")
     pfp = pfp.resize((265, 265))  # make pfp 265x265
 
     # hardcode values since the images are resized to a hardcoded value
@@ -75,6 +76,7 @@ def make_leave(pfp: BytesIO, member: discord.Member):
     bg = bg.resize((1024, 415))  # resize
 
     pfp = Image.open(pfp)  # make the pfp a PIL Image
+    pfp = pfp.convert("RGBA")
     pfp = pfp.resize((265, 265))  # make pfp 265x265
 
     # hardcode values since the images are resized to a hardcoded value

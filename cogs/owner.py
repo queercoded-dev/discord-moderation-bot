@@ -58,10 +58,10 @@ class Owner(commands.Cog):
 
         try:
             # add a layer of indentation
-            cmd = "\n    ".join(f"    {i}" for i in code.splitlines())
+            cmd = "\n    ".join(code.splitlines())
 
             # wrap in async def body
-            body = f"async def {fn_name}():\n{cmd}"
+            body = f"async def {fn_name}():\n    {cmd}"
 
             parsed = ast.parse(body)
             body = parsed.body[0].body
