@@ -36,6 +36,7 @@ INTEREST_VIEW = {
     "Game Dev/Modding": {"roleId": 933008738103742464, "emoji": "gamedev:933127502451331093"},
     "Networking": {"roleId": 928785182406873188, "emoji": "router:933127503902543883"},
     "Programming": {"roleId": 928786544440000522, "emoji": "code:933127502963048488"},
+    "Ping": {"roleId": 934851594204360756, "emoji": "ping:934853400254894110"},
 }
 
 OS_DIVIDER = 928737228539174992
