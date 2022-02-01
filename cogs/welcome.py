@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from config import GUILD_ID, WELCOME_ID, MEMBER_ID
+from config import GUILD_ID, WELCOME_ID, MEMBER_ID, MAIN_ID
 from utils import utc_now
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
@@ -127,6 +127,10 @@ class WelcomeImage(commands.Cog):
         image = await get_pfp(member)
         image = make_welcome(BytesIO(image), member)
         await self.send_image(image)
+
+        # Send welcome text in #main
+        main = self.bot.get_channel(MAIN_ID)
+        await main.send(f"Welcome {member.mention} :)")
 
         await self.task(member.id, MEMBER_ROLE_DELAY)
 
