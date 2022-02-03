@@ -76,7 +76,7 @@ class View(discord.ui.View):
 
 
 class RoleDropdown(discord.ui.Select):
-    def __init__(self, view, divider: int, max, member: discord.Member):
+    def __init__(self, view, divider: int, max: int, member: discord.Member):
         self.role_view = view
         self.divider = divider
         self.member = member
@@ -90,7 +90,7 @@ class RoleDropdown(discord.ui.Select):
         ]
 
         super().__init__(placeholder="Select your roles", options=options,
-                         min_values=0, max_values=len(view))
+                         min_values=0, max_values=self.max)
 
     async def callback(self, interaction: discord.Interaction):
         member = self.member.guild.get_member(self.member.id)  # Ensure the member object is up to date
@@ -106,7 +106,7 @@ class RoleDropdown(discord.ui.Select):
                 await self.member.remove_roles(role, reason="Reaction role.")
 
         # Assign divider if given and needed
-        if divider is not None:
+        if self.divider is not None:
             divider_role = self.member.guild.get_role(self.divider)
             if self.values and divider_role not in member.roles:
                 await self.member.add_roles(divider_role, reason="Divider role.")
