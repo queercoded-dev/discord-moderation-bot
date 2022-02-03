@@ -128,7 +128,7 @@ class RoleMenu(discord.ui.View):
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="🎨", label="Colours", custom_id="RoleMenu_Colours")
-    async def pronouns(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def colours(self, button: discord.ui.Button, interaction: discord.Interaction):
         view = View(RoleDropdown(COLOURS_VIEW, None, 1, interaction.user))
         await interaction.response.send_message("Please select a colour from the roles below",
                                                 view=view, ephemeral=True)
