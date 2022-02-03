@@ -11,6 +11,23 @@ PRONOUNS_VIEW = {
     "Other/Ask me": {"roleId": 931028748973768825},
 }
 
+COLOURS_VIEW = {
+    "Silver": {"roleId": 938915036330606692},
+    "Gray": {"roleId": 938914712115101817},
+    "Red": {"roleId": 938909726945722438},
+    "Maroon": {"roleId": 938915198272671786},
+    "Yellow": {"roleId": 938912658936180757},
+    "Olive": {"roleId": 938913871282978846},
+    "Lime": {"roleId": 938912477570301952},
+    "Green": {"roleId": 938913738210291752},
+    "Aqua": {"roleId": 938912702066216971},
+    "Teal": {"roleId": 938913907165253672},
+    "Blue": {"roleId": 938912524521336874},
+    "Navy": {"roleId": 938913720866844714},
+    "Fuchsia": {"roleId": 938912572420268072},
+    "Purple": {"roleId": 938913675195080774},
+}
+
 LANG_DIVIDER = 928718017678958613
 LANGUAGE_VIEW = {
     "C": {"roleId": 927942745639780432, "emoji": "c_:927947447425204304"},
@@ -59,10 +76,11 @@ class View(discord.ui.View):
 
 
 class RoleDropdown(discord.ui.Select):
-    def __init__(self, view, divider: int, member: discord.Member):
+    def __init__(self, view, divider: int, max, member: discord.Member):
         self.role_view = view
         self.divider = divider
         self.member = member
+        self.max = max
 
         roles = [x.id for x in member.roles]
         options = [
@@ -87,12 +105,13 @@ class RoleDropdown(discord.ui.Select):
             elif name not in self.values and role in member.roles:  # Not selected and is assigned
                 await self.member.remove_roles(role, reason="Reaction role.")
 
-        # Assign divider if needed
-        divider_role = self.member.guild.get_role(self.divider)
-        if self.values and divider_role not in member.roles:
-            await self.member.add_roles(divider_role, reason="Divider role.")
-        elif not self.values and divider_role in member.roles:
-            await self.member.remove_roles(divider_role, reason="Divider role.")
+        # Assign divider if given and needed
+        if divider is not None:
+            divider_role = self.member.guild.get_role(self.divider)
+            if self.values and divider_role not in member.roles:
+                await self.member.add_roles(divider_role, reason="Divider role.")
+            elif not self.values and divider_role in member.roles:
+                await self.member.remove_roles(divider_role, reason="Divider role.")
 
         # Respond with selection
         await interaction.response.send_message("Updated roles!", ephemeral=True)
@@ -104,25 +123,31 @@ class RoleMenu(discord.ui.View):
 
     @discord.ui.button(emoji="🏷", label="Pronouns", custom_id="RoleMenu_Pronouns")
     async def pronouns(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, interaction.user))
+        view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, len(PRONOUNS_VIEW), interaction.user))
         await interaction.response.send_message("Please select your pronouns roles below.",
+                                                view=view, ephemeral=True)
+
+    @discord.ui.button(emoji="🎨", label="Colours", custom_id="RoleMenu_Colours")
+    async def pronouns(self, button: discord.ui.Button, interaction: discord.Interaction):
+        view = View(RoleDropdown(COLOURS_VIEW, None, 1, interaction.user))
+        await interaction.response.send_message("Please select a colour from the roles below",
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="⌨️", label="Languages", custom_id="RoleMenu_Languages")
     async def languages(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(LANGUAGE_VIEW, LANG_DIVIDER, interaction.user))
+        view = View(RoleDropdown(LANGUAGE_VIEW, LANG_DIVIDER, len(LANGUAGE_VIEW), interaction.user))
         await interaction.response.send_message("Please select from the language roles below.",
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="🖥️", label="OS", custom_id="RoleMenu_OS")
     async def os(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(OS_VIEW, OS_DIVIDER, interaction.user))
+        view = View(RoleDropdown(OS_VIEW, OS_DIVIDER, len(OS_VIEW), interaction.user))
         await interaction.response.send_message("Please select from the OS roles below.",
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="🗂️", label="Interests", custom_id="RoleMenu_Interests")
     async def interests(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, interaction.user))
+        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, len(INTEREST_DIVIDER), interaction.user))
         await interaction.response.send_message("Please select from the interest roles below.",
                                                 view=view, ephemeral=True)
 
@@ -138,6 +163,14 @@ class Roles(commands.Cog):
         await ctx.message.delete(delay=2)  # Deletes command in chat
         view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, ctx.author))
         await ctx.send("Please select your pronouns roles below.", view=view, ephemeral=True)
+
+    @commands.command(message_command=False, slash_command=True, ephemeral=True,
+                      slash_command_guilds=[GUILD_ID])
+    async def colourroles(self, ctx: commands.Context):
+        """Creates a role picker for colours"""
+        await ctx.message.delete(delay=2)  # Deletes command in chat
+        view = View(RoleDropdown(COLOURS_VIEW, None, ctx.author))
+        await ctx.send("Please select a colour from the roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[GUILD_ID])
