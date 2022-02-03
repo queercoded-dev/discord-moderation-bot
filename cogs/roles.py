@@ -12,20 +12,24 @@ PRONOUNS_VIEW = {
 }
 
 COLOURS_VIEW = {
-    "Silver": {"roleId": 938915036330606692},
-    "Gray": {"roleId": 938914712115101817},
-    "Red": {"roleId": 938909726945722438},
-    "Maroon": {"roleId": 938915198272671786},
-    "Yellow": {"roleId": 938912658936180757},
-    "Olive": {"roleId": 938913871282978846},
-    "Lime": {"roleId": 938912477570301952},
-    "Green": {"roleId": 938913738210291752},
-    "Aqua": {"roleId": 938912702066216971},
-    "Teal": {"roleId": 938913907165253672},
-    "Blue": {"roleId": 938912524521336874},
-    "Navy": {"roleId": 938913720866844714},
-    "Fuchsia": {"roleId": 938912572420268072},
-    "Purple": {"roleId": 938913675195080774},
+    "Silver": {"roleId": 938915036330606692, "emoji": "silver:938928363211472998"},
+    "Gray": {"roleId": 938914712115101817, "emoji": "gray:938928363362467870"},
+    "Red": {"roleId": 938909726945722438, "emoji": "red:938928064446988348"},
+    "Maroon": {"roleId": 938915198272671786, "emoji": "maroon:938928064132423793"},
+    "Yellow": {"roleId": 938912658936180757, "emoji": "yellow:938928064426041354"},
+    "Olive": {"roleId": 938913871282978846, "emoji": "olive:938928064170188901"},
+    "Lime": {"roleId": 938912477570301952, "emoji": "lime:938928064447004763"},
+    "Green": {"roleId": 938913738210291752, "emoji": "green:938928064136626257"},
+    "Aqua": {"roleId": 938912702066216971, "emoji": "aqua:938928064279224371"},
+    "Teal": {"roleId": 938913907165253672, "emoji": "teal:938928063830450267"},
+    "Blue": {"roleId": 938912524521336874, "emoji": "blue:938928064400863252"},
+    "Navy": {"roleId": 938913720866844714, "emoji": "navy:938928064224702484"},
+    "Fuchsia": {"roleId": 938912572420268072, "emoji": "fuchsia:938928064228888616"},
+    "Purple": {"roleId": 938913675195080774, "emoji": "purple:938928064212111421"},
+}
+
+META_VIEW = {
+    "Announcement pings": {"roleId": 934851594204360756},
 }
 
 LANG_DIVIDER = 928718017678958613
@@ -53,7 +57,6 @@ INTEREST_VIEW = {
     "Game Dev/Modding": {"roleId": 933008738103742464, "emoji": "gamedev:933127502451331093"},
     "Networking": {"roleId": 928785182406873188, "emoji": "router:933127503902543883"},
     "Programming": {"roleId": 928786544440000522, "emoji": "code:933127502963048488"},
-    "Ping": {"roleId": 934851594204360756, "emoji": "ping:934853400254894110"},
 }
 
 OS_DIVIDER = 928737228539174992
@@ -116,7 +119,6 @@ class RoleDropdown(discord.ui.Select):
         # Respond with selection
         await interaction.response.send_message("Updated roles!", ephemeral=True)
 
-
 class RoleMenu(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -131,6 +133,12 @@ class RoleMenu(discord.ui.View):
     async def colours(self, button: discord.ui.Button, interaction: discord.Interaction):
         view = View(RoleDropdown(COLOURS_VIEW, None, 1, interaction.user))
         await interaction.response.send_message("Please select a colour from the roles below",
+                                                view=view, ephemeral=True)
+
+    @discord.ui.button(emoji="🔔", label="Ping", custom_id="RoleMenu_Meta")
+    async def meta(self, button: discord.ui.Button, interaction: discord.Interaction):
+        view = View(RoleDropdown(META_VIEW, None, len(META_VIEW), interaction.user))
+        await interaction.response.send_message("Please select your server roles bnelow.",
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="⌨️", label="Languages", custom_id="RoleMenu_Languages")
