@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from config import GUILD_ID, WELCOME_ID, MEMBER_ID, MAIN_ID
+from config import GUILD_ID, WELCOME_ID, MEMBER_ID, NEW_MEMBER_ID, MAIN_ID
 from utils import utc_now
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
@@ -132,6 +132,9 @@ class WelcomeImage(commands.Cog):
         main = self.bot.get_channel(MAIN_ID)
         await main.send(f"Welcome {member.mention} :)")
 
+        new_member_role = member.guild.get_role(NEW_MEMBER_ID)
+        await member.add_roles(new_member_role, reason="New Member Role")
+
         await self.task(member.id, MEMBER_ROLE_DELAY)
 
     @commands.Cog.listener()
@@ -149,17 +152,22 @@ class WelcomeImage(commands.Cog):
         guild = self.bot.get_guild(GUILD_ID)
         member = guild.get_member(user_id)
         if member:
-            role = guild.get_role(MEMBER_ID)
-            await member.add_roles(role, reason="Member Role")
+            new_member_role = guild.get_role(NEW_MEMBER_ID)
+            await member.remove_roles(new_member_role, reason="New Member Role")
+            member_role = guild.get_role(MEMBER_ID)
+            await member.add_roles(member_role, reason="Member Role")
 
     @commands.Cog.listener()
     async def on_ready(self):
         # Figure out which members do not have the role
         guild = self.bot.get_guild(GUILD_ID)
-        role = guild.get_role(MEMBER_ID)
-
+        member_role = guild.get_role(MEMBER_ID)
+        new_member_role = guild.get_role(NEW_MEMBER_ID)
+        
         for member in guild.members:
-            if not member.bot and role not in member.roles:
+            if not member.bot and member_role not in member.roles:
+                if new_member_role not in member.roles:
+                    await member.add_roles(new_member_role, reason="Member Role")
                 delay = MEMBER_ROLE_DELAY - (utc_now() - member.joined_at).total_seconds()
 
                 asyncio.create_task(self.task(member.id, delay))

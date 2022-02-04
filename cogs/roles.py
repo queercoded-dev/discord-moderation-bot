@@ -11,6 +11,27 @@ PRONOUNS_VIEW = {
     "Other/Ask me": {"roleId": 931028748973768825},
 }
 
+COLOURS_VIEW = {
+    "Silver": {"roleId": 938915036330606692, "emoji": "silver:938928363211472998"},
+    "Gray": {"roleId": 938914712115101817, "emoji": "gray:938928363362467870"},
+    "Red": {"roleId": 938909726945722438, "emoji": "red:938928064446988348"},
+    "Maroon": {"roleId": 938915198272671786, "emoji": "maroon:938928064132423793"},
+    "Yellow": {"roleId": 938912658936180757, "emoji": "yellow:938928064426041354"},
+    "Olive": {"roleId": 938913871282978846, "emoji": "olive:938928064170188901"},
+    "Lime": {"roleId": 938912477570301952, "emoji": "lime:938928064447004763"},
+    "Green": {"roleId": 938913738210291752, "emoji": "green:938928064136626257"},
+    "Aqua": {"roleId": 938912702066216971, "emoji": "aqua:938928064279224371"},
+    "Teal": {"roleId": 938913907165253672, "emoji": "teal:938928063830450267"},
+    "Blue": {"roleId": 938912524521336874, "emoji": "blue:938928064400863252"},
+    "Navy": {"roleId": 938913720866844714, "emoji": "navy:938928064224702484"},
+    "Fuchsia": {"roleId": 938912572420268072, "emoji": "fuchsia:938928064228888616"},
+    "Purple": {"roleId": 938913675195080774, "emoji": "purple:938928064212111421"},
+}
+
+META_VIEW = {
+    "Announcement pings": {"roleId": 934851594204360756},
+}
+
 LANG_DIVIDER = 928718017678958613
 LANGUAGE_VIEW = {
     "C": {"roleId": 927942745639780432, "emoji": "c_:927947447425204304"},
@@ -34,9 +55,9 @@ INTEREST_VIEW = {
     "Circuits": {"roleId": 928724312502988820, "emoji": "transistor:933129000941912144"},
     "Cyber Security": {"roleId": 928724530673901669, "emoji": "firewall:933127502921105408"},
     "Game Dev/Modding": {"roleId": 933008738103742464, "emoji": "gamedev:933127502451331093"},
+    "Math": {"roleId": 938949433016586270, "emoji": "math:938949118330556518"},
     "Networking": {"roleId": 928785182406873188, "emoji": "router:933127503902543883"},
     "Programming": {"roleId": 928786544440000522, "emoji": "code:933127502963048488"},
-    "Ping": {"roleId": 934851594204360756, "emoji": "ping:934853400254894110"},
 }
 
 OS_DIVIDER = 928737228539174992
@@ -59,10 +80,11 @@ class View(discord.ui.View):
 
 
 class RoleDropdown(discord.ui.Select):
-    def __init__(self, view, divider: int, member: discord.Member):
+    def __init__(self, view, divider: int, max: int, member: discord.Member):
         self.role_view = view
         self.divider = divider
         self.member = member
+        self.max = max
 
         roles = [x.id for x in member.roles]
         options = [
@@ -72,7 +94,7 @@ class RoleDropdown(discord.ui.Select):
         ]
 
         super().__init__(placeholder="Select your roles", options=options,
-                         min_values=0, max_values=len(view))
+                         min_values=0, max_values=self.max)
 
     async def callback(self, interaction: discord.Interaction):
         member = self.member.guild.get_member(self.member.id)  # Ensure the member object is up to date
@@ -87,16 +109,16 @@ class RoleDropdown(discord.ui.Select):
             elif name not in self.values and role in member.roles:  # Not selected and is assigned
                 await self.member.remove_roles(role, reason="Reaction role.")
 
-        # Assign divider if needed
-        divider_role = self.member.guild.get_role(self.divider)
-        if self.values and divider_role not in member.roles:
-            await self.member.add_roles(divider_role, reason="Divider role.")
-        elif not self.values and divider_role in member.roles:
-            await self.member.remove_roles(divider_role, reason="Divider role.")
+        # Assign divider if given and needed
+        if self.divider is not None:
+            divider_role = self.member.guild.get_role(self.divider)
+            if self.values and divider_role not in member.roles:
+                await self.member.add_roles(divider_role, reason="Divider role.")
+            elif not self.values and divider_role in member.roles:
+                await self.member.remove_roles(divider_role, reason="Divider role.")
 
         # Respond with selection
         await interaction.response.send_message("Updated roles!", ephemeral=True)
-
 
 class RoleMenu(discord.ui.View):
     def __init__(self):
@@ -104,25 +126,37 @@ class RoleMenu(discord.ui.View):
 
     @discord.ui.button(emoji="🏷", label="Pronouns", custom_id="RoleMenu_Pronouns")
     async def pronouns(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, interaction.user))
+        view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, len(PRONOUNS_VIEW), interaction.user))
         await interaction.response.send_message("Please select your pronouns roles below.",
+                                                view=view, ephemeral=True)
+
+    @discord.ui.button(emoji="🎨", label="Colours", custom_id="RoleMenu_Colours")
+    async def colours(self, button: discord.ui.Button, interaction: discord.Interaction):
+        view = View(RoleDropdown(COLOURS_VIEW, None, 1, interaction.user))
+        await interaction.response.send_message("Please select a colour from the roles below",
+                                                view=view, ephemeral=True)
+
+    @discord.ui.button(emoji="🔔", label="Ping", custom_id="RoleMenu_Meta")
+    async def meta(self, button: discord.ui.Button, interaction: discord.Interaction):
+        view = View(RoleDropdown(META_VIEW, None, len(META_VIEW), interaction.user))
+        await interaction.response.send_message("Please select your server roles bnelow.",
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="⌨️", label="Languages", custom_id="RoleMenu_Languages")
     async def languages(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(LANGUAGE_VIEW, LANG_DIVIDER, interaction.user))
+        view = View(RoleDropdown(LANGUAGE_VIEW, LANG_DIVIDER, len(LANGUAGE_VIEW), interaction.user))
         await interaction.response.send_message("Please select from the language roles below.",
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="🖥️", label="OS", custom_id="RoleMenu_OS")
     async def os(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(OS_VIEW, OS_DIVIDER, interaction.user))
+        view = View(RoleDropdown(OS_VIEW, OS_DIVIDER, len(OS_VIEW), interaction.user))
         await interaction.response.send_message("Please select from the OS roles below.",
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="🗂️", label="Interests", custom_id="RoleMenu_Interests")
     async def interests(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, interaction.user))
+        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, len(INTEREST_VIEW), interaction.user))
         await interaction.response.send_message("Please select from the interest roles below.",
                                                 view=view, ephemeral=True)
 
@@ -138,6 +172,14 @@ class Roles(commands.Cog):
         await ctx.message.delete(delay=2)  # Deletes command in chat
         view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, ctx.author))
         await ctx.send("Please select your pronouns roles below.", view=view, ephemeral=True)
+
+    @commands.command(message_command=False, slash_command=True, ephemeral=True,
+                      slash_command_guilds=[GUILD_ID])
+    async def colourroles(self, ctx: commands.Context):
+        """Creates a role picker for colours"""
+        await ctx.message.delete(delay=2)  # Deletes command in chat
+        view = View(RoleDropdown(COLOURS_VIEW, None, ctx.author))
+        await ctx.send("Please select a colour from the roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
                       slash_command_guilds=[GUILD_ID])
