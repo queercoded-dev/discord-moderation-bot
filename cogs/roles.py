@@ -55,6 +55,7 @@ INTEREST_VIEW = {
     "Circuits": {"roleId": 928724312502988820, "emoji": "transistor:933129000941912144"},
     "Cyber Security": {"roleId": 928724530673901669, "emoji": "firewall:933127502921105408"},
     "Game Dev/Modding": {"roleId": 933008738103742464, "emoji": "gamedev:933127502451331093"},
+    "Math": {"roleId": 938949433016586270, "emoji": "math:938949118330556518"},
     "Networking": {"roleId": 928785182406873188, "emoji": "router:933127503902543883"},
     "Programming": {"roleId": 928786544440000522, "emoji": "code:933127502963048488"},
 }
@@ -155,7 +156,7 @@ class RoleMenu(discord.ui.View):
 
     @discord.ui.button(emoji="🗂️", label="Interests", custom_id="RoleMenu_Interests")
     async def interests(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, len(INTEREST_DIVIDER), interaction.user))
+        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, len(INTEREST_VIEW), interaction.user))
         await interaction.response.send_message("Please select from the interest roles below.",
                                                 view=view, ephemeral=True)
 
