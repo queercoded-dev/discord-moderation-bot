@@ -80,11 +80,11 @@ class View(discord.ui.View):
 
 
 class RoleDropdown(discord.ui.Select):
-    def __init__(self, view, divider: int, max: int, member: discord.Member):
+    def __init__(self, view, member: discord.Member, divider: int = None, max_roles: int = None):
         self.role_view = view
         self.divider = divider
         self.member = member
-        self.max = max
+        self.max = max_roles if max_roles is not None else len(view)
 
         roles = [x.id for x in member.roles]
         options = [
@@ -120,43 +120,44 @@ class RoleDropdown(discord.ui.Select):
         # Respond with selection
         await interaction.response.send_message("Updated roles!", ephemeral=True)
 
+
 class RoleMenu(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="🏷", label="Pronouns", custom_id="RoleMenu_Pronouns")
+    @discord.ui.button(emoji="🏷", label="Pronouns", custom_id="RoleMenu_Pronouns", row=1)
     async def pronouns(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, len(PRONOUNS_VIEW), interaction.user))
+        view = View(RoleDropdown(PRONOUNS_VIEW, interaction.user, PRONOUNS_DIVIDER))
         await interaction.response.send_message("Please select your pronouns roles below.",
                                                 view=view, ephemeral=True)
 
-    @discord.ui.button(emoji="🎨", label="Colours", custom_id="RoleMenu_Colours")
+    @discord.ui.button(emoji="🎨", label="Colours", custom_id="RoleMenu_Colours", row=1)
     async def colours(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(COLOURS_VIEW, None, 1, interaction.user))
+        view = View(RoleDropdown(COLOURS_VIEW, interaction.user, max_roles=1))
         await interaction.response.send_message("Please select a colour from the roles below",
                                                 view=view, ephemeral=True)
 
-    @discord.ui.button(emoji="🔔", label="Ping", custom_id="RoleMenu_Meta")
+    @discord.ui.button(emoji="🔔", label="Ping", custom_id="RoleMenu_Meta", row=1)
     async def meta(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(META_VIEW, None, len(META_VIEW), interaction.user))
+        view = View(RoleDropdown(META_VIEW, interaction.user))
         await interaction.response.send_message("Please select your server roles bnelow.",
                                                 view=view, ephemeral=True)
 
-    @discord.ui.button(emoji="⌨️", label="Languages", custom_id="RoleMenu_Languages")
+    @discord.ui.button(emoji="⌨️", label="Languages", custom_id="RoleMenu_Languages", row=2)
     async def languages(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(LANGUAGE_VIEW, LANG_DIVIDER, len(LANGUAGE_VIEW), interaction.user))
+        view = View(RoleDropdown(LANGUAGE_VIEW, interaction.user, LANG_DIVIDER))
         await interaction.response.send_message("Please select from the language roles below.",
                                                 view=view, ephemeral=True)
 
-    @discord.ui.button(emoji="🖥️", label="OS", custom_id="RoleMenu_OS")
+    @discord.ui.button(emoji="🖥️", label="OS", custom_id="RoleMenu_OS", row=2)
     async def os(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(OS_VIEW, OS_DIVIDER, len(OS_VIEW), interaction.user))
+        view = View(RoleDropdown(OS_VIEW, interaction.user, OS_DIVIDER))
         await interaction.response.send_message("Please select from the OS roles below.",
                                                 view=view, ephemeral=True)
 
-    @discord.ui.button(emoji="🗂️", label="Interests", custom_id="RoleMenu_Interests")
+    @discord.ui.button(emoji="🗂️", label="Interests", custom_id="RoleMenu_Interests", row=2)
     async def interests(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, len(INTEREST_VIEW), interaction.user))
+        view = View(RoleDropdown(INTEREST_VIEW, interaction.user, INTEREST_DIVIDER))
         await interaction.response.send_message("Please select from the interest roles below.",
                                                 view=view, ephemeral=True)
 
@@ -170,7 +171,7 @@ class Roles(commands.Cog):
     async def pronounroles(self, ctx: commands.Context):
         """Creates a role picker for your pronouns"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(PRONOUNS_VIEW, PRONOUNS_DIVIDER, ctx.author))
+        view = View(RoleDropdown(PRONOUNS_VIEW, ctx.author, divider=PRONOUNS_DIVIDER))
         await ctx.send("Please select your pronouns roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
@@ -178,7 +179,7 @@ class Roles(commands.Cog):
     async def colourroles(self, ctx: commands.Context):
         """Creates a role picker for colours"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(COLOURS_VIEW, None, ctx.author))
+        view = View(RoleDropdown(COLOURS_VIEW, ctx.author))
         await ctx.send("Please select a colour from the roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
@@ -186,7 +187,7 @@ class Roles(commands.Cog):
     async def langroles(self, ctx: commands.Context):
         """Creates a role picker for programming languages"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(LANGUAGE_VIEW, LANG_DIVIDER, ctx.author))
+        view = View(RoleDropdown(LANGUAGE_VIEW, ctx.author, divider=LANG_DIVIDER))
         await ctx.send("Please select from the language roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
@@ -194,7 +195,7 @@ class Roles(commands.Cog):
     async def interestroles(self, ctx: commands.Context):
         """Creates a role picker for interests"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(INTEREST_VIEW, INTEREST_DIVIDER, ctx.author))
+        view = View(RoleDropdown(INTEREST_VIEW, ctx.author, divider=INTEREST_DIVIDER))
         await ctx.send("Please select from the interest roles below.", view=view, ephemeral=True)
 
     @commands.command(message_command=False, slash_command=True, ephemeral=True,
@@ -202,7 +203,7 @@ class Roles(commands.Cog):
     async def osroles(self, ctx: commands.Context):
         """Creates a role picker for operating systems"""
         await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(OS_VIEW, OS_DIVIDER, ctx.author))
+        view = View(RoleDropdown(OS_VIEW, ctx.author, divider=OS_DIVIDER))
         await ctx.send("Please select from the OS roles below.", view=view, ephemeral=True)
 
     @commands.command()
