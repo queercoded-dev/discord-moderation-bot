@@ -116,7 +116,7 @@ class Moderation(commands.Cog):
     async def mute(self, ctx: commands.Context, member: discord.Member, duration: commands.Greedy[RelativeTime] = None,
                    *, reason=None):
         """
-        Bans a user for certain time-scale
+        Timeout a user for a given time period
         """
         if duration is None:
             raise commands.BadArgument
