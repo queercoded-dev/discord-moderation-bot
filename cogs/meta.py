@@ -49,7 +49,7 @@ async def help_embed(ctx: commands.Context, bot: commands.Bot, command: commands
     return em
 
 
-class Help(commands.Cog, name="Meta"):
+class Meta(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
 
@@ -151,6 +151,7 @@ class Help(commands.Cog, name="Meta"):
 
             em = await help_embed(ctx, self.bot, command)  # send help embed for that command
             await ctx.send(embed=em)
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.content == f"<@{self.bot.user.id}> " or message.content == f"<@!{self.bot.user.id}> ":
@@ -180,4 +181,4 @@ class Help(commands.Cog, name="Meta"):
 
 
 def setup(bot):
-    bot.add_cog(Help(bot))
+    bot.add_cog(Meta(bot))
