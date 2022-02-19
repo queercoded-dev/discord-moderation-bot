@@ -29,7 +29,8 @@ COLOURS_VIEW = {
 }
 
 META_VIEW = {
-    "Announcement pings": {"roleId": 934851594204360756},
+    "Announcement pings": {"roleId": 934851594204360756, "emoji": "📢"},
+    "Voice chat ping": {"roleId": 944388390021906552, "emoji": "🎙️"},
 }
 
 LANG_DIVIDER = 928718017678958613
