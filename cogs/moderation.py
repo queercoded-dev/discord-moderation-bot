@@ -141,7 +141,7 @@ class Moderation(commands.Cog):
 
         await self.mod_action_embed(author=ctx.author, target=member,
                                     desc=f"**🔇 Timed out {member.mention}**" +
-                                         (f"**for**:\n```{reason}```" if reason else ""),
+                                         (f" **for**:\n```{reason}```" if reason else ""),
                                     fields={"Duration": duration_str, "Unmute": dynamic_str})
 
     @commands.command()
