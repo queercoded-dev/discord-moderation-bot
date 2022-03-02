@@ -56,7 +56,7 @@ async def can_moderate_user(ctx: commands.Context, member: discord.Member):
 
 class CmdArgParser(ArgumentParser):
     def __init__(self):
-        super().__init__(allow_abbrev=False, exit_on_error=False, add_help=False)
+        super().__init__(allow_abbrev=False, add_help=False)
 
     def error(self, message):
         raise commands.BadArgument
