@@ -128,14 +128,15 @@ class WelcomeImage(commands.Cog):
         image = make_welcome(BytesIO(image), member)
         await self.send_image(image)
 
-        # Send welcome text in #main
-        main = self.bot.get_channel(MAIN_ID)
-        await main.send(f"Welcome {member.mention} :)")
+        if not member.bot:
+            # Send welcome text in #main
+            main = self.bot.get_channel(MAIN_ID)
+            await main.send(f"Welcome {member.mention} :)")
+    
+            new_member_role = member.guild.get_role(NEW_MEMBER_ID)
+            await member.add_roles(new_member_role, reason="New Member Role")
 
-        new_member_role = member.guild.get_role(NEW_MEMBER_ID)
-        await member.add_roles(new_member_role, reason="New Member Role")
-
-        await self.task(member.id, MEMBER_ROLE_DELAY)
+            await self.task(member.id, MEMBER_ROLE_DELAY)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
