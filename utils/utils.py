@@ -5,6 +5,9 @@ from discord.ext import commands
 import re
 import datetime as dt
 
+LETTERS = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷",
+           "🇸", "🇹", "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"]
+
 
 def utc_now():
     return dt.datetime.now(dt.timezone.utc)
