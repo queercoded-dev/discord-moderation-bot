@@ -215,7 +215,7 @@ class Moderation(commands.Cog):
         else:  # discord.User
             can_dm = False
 
-        await ctx.guild.ban(user, reason=reason)
+        await ctx.guild.ban(user, reason=reason, delete_message_days=0)
 
         if duration:
             duration_delta = dt.timedelta(minutes=sum(duration))
