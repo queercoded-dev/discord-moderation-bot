@@ -5,7 +5,6 @@ from utils.utils import utc_now
 import traceback as tb
 from math import ceil
 
-
 MODERATION = 0x481D24  # dark red
 DELETE = 0xff595e  # red
 ROLE = 0xEE6F3D  # orange
@@ -40,6 +39,7 @@ def traceback(e: Exception):  # Converts an exception into the full traceback re
 class Log(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
+        self.invite_cache = {}
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
@@ -129,6 +129,12 @@ class Log(commands.Cog):
         em.set_footer(text=f"User ID: {member.id}")
         em.timestamp = utc_now()
 
+        invite, inviter = await self.calc_member_invite()
+        if inviter and invite:
+            em.add_field(name="Invite:", value=f"Joined using invite {invite} - {inviter.mention}")
+        elif invite:
+            em.add_field(name="Invite:", value=f"Joined using invite {invite}")
+
         channel = self.bot.get_channel(LOG_ID)
         await channel.send(embed=em)
 
@@ -200,6 +206,47 @@ class Log(commands.Cog):
             content = f"Error in {ctx.message.jump_url}\n```{error_text if len(error_text) < 1500 else error}```"
             channel = self.bot.get_channel(LOG_ID)
             await channel.send(content)
+
+    """Invite tracking"""
+
+    async def get_invites(self):
+        guild = self.bot.get_guild(GUILD_ID)
+        invites = await guild.invites()
+
+        invite_data = {}
+        for invite in invites:
+            invite_data.update({invite.id: (invite.uses, invite.inviter)})
+
+        return invite_data
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.invite_cache = await self.get_invites()
+
+    @commands.Cog.listener()
+    async def on_load(self, cog):
+        if cog + ".py" == __import__("os").path.basename(__file__):  # if cog is this file
+            self.invite_cache = await self.get_invites()
+
+    async def calc_member_invite(self):
+        """
+        When a member joins, hopefully an existing invite has +1 uses, or a new invite will exist with 1 usage
+        Otherwise it's a one time invite, vanity url or a discord moment:tm:
+        """
+        current = await self.get_invites()
+
+        for invite, (uses, inviter) in current.items():
+            if invite in self.invite_cache:  # Existing invite
+                if uses == self.invite_cache[invite][0] + 1:  # +1 uses from the last cache
+                    self.invite_cache = current
+                    return invite, inviter
+            else:  # New invite
+                if uses == 1:
+                    self.invite_cache = current
+                    return invite, inviter
+
+        self.invite_cache = current
+        return None, None
 
 
 def setup(bot):
