@@ -141,7 +141,7 @@ class RoleMenu(discord.ui.View):
     @discord.ui.button(emoji="🔔", label="Ping", custom_id="RoleMenu_Meta", row=1)
     async def meta(self, button: discord.ui.Button, interaction: discord.Interaction):
         view = View(RoleDropdown(META_VIEW, interaction.user))
-        await interaction.response.send_message("Please select your server roles bnelow.",
+        await interaction.response.send_message("Please select your server roles below.",
                                                 view=view, ephemeral=True)
 
     @discord.ui.button(emoji="⌨️", label="Languages", custom_id="RoleMenu_Languages", row=2)
