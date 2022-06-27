@@ -1,5 +1,6 @@
 python-dotenv
 Pillow
-git+https://github.com/iDevision/enhanced-discord.py
+py-cord==2.0.0rc1
 motor
 pymongo[srv]
+pyyaml

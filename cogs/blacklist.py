@@ -31,9 +31,8 @@ class Blacklist(commands.Cog):
             await message.delete()
             if not message.author.bot:
                 # 5 second mute to discourage spam
-                timeout = utc_now() + dt.timedelta(seconds=5)
                 try:
-                    await message.author.edit(timeout_until=timeout)
+                    await message.author.timeout_for(dt.timedelta(seconds=5))
                 except discord.Forbidden:
                     pass
 

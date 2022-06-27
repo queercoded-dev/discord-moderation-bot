@@ -39,13 +39,13 @@ class Modal(discord.ui.Modal):
         super().__init__(title="Bot Application:", custom_id="CommunityBotApp")
 
         self.add_item(
-            discord.ui.TextInput(label="Bot ID", placeholder="Bot ID", min_length=15, max_length=20)
+            discord.ui.InputText(label="Bot ID", placeholder="Bot ID", min_length=15, max_length=20)
         )
         self.add_item(
-            discord.ui.TextInput(label="Tell Us About Your Bot",
+            discord.ui.InputText(label="Tell Us About Your Bot",
                                  placeholder="What does your bot do?\n"
                                              "Provide a link to your bots homepage/repo if you have one",
-                                 style=discord.TextInputStyle.paragraph)
+                                 style=discord.InputTextStyle.paragraph)
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -59,7 +59,7 @@ class Modal(discord.ui.Modal):
         reason = self.children[1].value  # type: str
 
         # Check if ID corresponds to a bot account
-        bot = await self.bot.try_user(bot_id)
+        bot = await self.bot.get_or_fetch_user(bot_id)
         if not bot or not bot.bot:
             await interaction.response.send_message("That user ID does not correspond to a bot account", ephemeral=True)
             return
@@ -145,7 +145,7 @@ class BotApplication(discord.ui.View):
         await interaction.message.edit(content="Application denied", view=None)
         await interaction.response.defer()  # Mark interaction as completed
 
-    async def interaction_check(self, item: discord.ui.Item, interaction: discord.Interaction):
+    async def interaction_check(self, interaction: discord.Interaction):
         return discord.utils.get(interaction.user.roles, id=MOD_ID)
 
 
@@ -153,12 +153,12 @@ class CommunityBots(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(slash_command=True, message_command=False, slash_command_guilds=[GUILD_ID])
-    async def addbot(self, ctx: commands.Context):
+    @discord.slash_command(guild_ids=[GUILD_ID])
+    async def addbot(self, ctx: discord.ApplicationContext):
         """
         Apply to have your bot added to our server
         """
-        await ctx.send(PREAMBLE, view=Accept(self.bot), ephemeral=True)
+        await ctx.respond(PREAMBLE, view=Accept(self.bot), ephemeral=True)
 
     @commands.command()
     @commands.has_role(MOD_ID)

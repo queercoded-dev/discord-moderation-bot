@@ -112,7 +112,7 @@ class Log(commands.Cog):
 
             # format embed
             em = discord.Embed(colour=ROLE, description=f"🔰 **Role {aor} {new.mention}**")
-            em.add_field(name="Role:", value=role, inline=False)
+            em.add_field(name="Role:", value=role.mention, inline=False)
             em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
             em.set_footer(text=f"User ID: {new.id}")
             em.timestamp = utc_now()

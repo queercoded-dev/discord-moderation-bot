@@ -129,7 +129,7 @@ class Moderation(commands.Cog):
         end_time = utc_now() + duration
         dynamic_str = discord.utils.format_dt(end_time, "R")
 
-        await member.edit(timeout_until=end_time, reason=reason)
+        await member.timeout_for(duration, reason=reason)
         case_num = await add_modlog(member, ctx.author, "timeout", reason, duration)
 
         em = discord.Embed(color=YELLOW, timestamp=utc_now())
@@ -153,7 +153,7 @@ class Moderation(commands.Cog):
         if not await can_moderate_user(ctx, member):
             return
 
-        await member.edit(timeout_until=None)
+        await member.timeout(None)
 
         em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
@@ -229,8 +229,13 @@ class Moderation(commands.Cog):
                 "type": "ban",
             })
             self.unban_loop.start()
+        else:
+            # Mostly to satisfy IDEs
+            duration_delta = None
+            duration_str = None
+            dynamic_str = None
 
-        case_num = await add_modlog(user, ctx.author, "ban", reason, duration=duration_delta if duration else None)
+        case_num = await add_modlog(user, ctx.author, "ban", reason, duration=duration_delta)
 
         em = discord.Embed(color=RED, timestamp=utc_now())
         em.set_author(name=user.display_name, icon_url=user.display_avatar.url)

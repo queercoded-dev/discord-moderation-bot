@@ -74,31 +74,34 @@ class Meta(commands.Cog):
             for cog in sorted(cogs, key=lambda x: x.qualified_name):  # look through cogs
                 embed = emb_template.copy()  # create base embed
                 embed.description = f"**{cog.qualified_name}**"
+
                 # iterate through commands
-                for i in sorted([x for x in cog.walk_commands()], key=lambda x: x.qualified_name.replace("_", "")):
+                cog_commands = sorted([x for x in cog.walk_commands()], key=lambda x: x.qualified_name.replace("_", ""))
+                cog_commands = [x for x in cog_commands if isinstance(x, commands.Command)]  # Don't include slash cmds
+                for cmd in cog_commands:
                     # Check if command can be run by user
                     try:
-                        can_run = await i.can_run(ctx)
+                        can_run = await cmd.can_run(ctx)
                     except commands.CommandError:
                         can_run = False
-                    if i.enabled and can_run and not i.hidden:  # if command can be run by user and isnt hidden
+                    if cmd.enabled and can_run and not cmd.hidden:  # if command can be run by user and isnt hidden
                         # add a description based on the command docstring
-                        if isinstance(i, commands.Group):  # if is a command group
+                        if isinstance(cmd, commands.Group):  # if is a command group
                             continue  # ignore command groups, skip to next iteration
-                        elif i.short_doc:  # if a help command is set
-                            desc = i.short_doc  # First line of docstring
+                        elif cmd.short_doc:  # if a help command is set
+                            desc = cmd.short_doc  # First line of docstring
                         else:
                             desc = "*No help text is set*"
                         # Get first alias that doesn't have an _ at the front
-                        name = next((x for x in [i.name] + i.aliases if not x.startswith("_")), i.name)
-                        parent = i.full_parent_name + " " if i.full_parent_name else ""
+                        name = next((x for x in [cmd.name] + cmd.aliases if not x.startswith("_")), cmd.name)
+                        parent = cmd.full_parent_name + " " if cmd.full_parent_name else ""
                         embed.add_field(name=f"{p}{parent}{name}", value=desc, inline=False)
                 if embed.fields:  # if no commands, don't add page
                     if len(embed.fields) > 10:  # if more than 10 commands
                         fields = chunks(embed.fields, 10)  # chunk the fields
-                        for i, chunk in enumerate(fields):  # for every chunk
+                        for cmd, chunk in enumerate(fields):  # for every chunk
                             embed = emb_template.copy()  # new embed
-                            embed.description = f"**{cog.qualified_name}:** {i + 1}"
+                            embed.description = f"**{cog.qualified_name}:** {cmd + 1}"
                             for field in chunk:
                                 embed.add_field(name=field.name, value=field.value, inline=False)  # populate
                             pages.append(embed)
@@ -116,9 +119,9 @@ class Meta(commands.Cog):
                     page = pages[command]  # get the requested page
                 else:  # A string was given
                     page = None
-                    for i in pages:
-                        if command.lower() in i.description.lower():  # if the page matches the cog name
-                            page = i
+                    for cmd in pages:
+                        if command.lower() in cmd.description.lower():  # if the page matches the cog name
+                            page = cmd
                             break
                     if not page:
                         em = discord.Embed(colour=RED, title=f"⛔ Error: Page/Command Not Found")
