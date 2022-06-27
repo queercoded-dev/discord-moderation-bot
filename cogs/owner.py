@@ -83,17 +83,17 @@ class Owner(commands.Cog):
 
             exec(compile(parsed, filename="<ast>", mode="exec"), env)
 
-            result = (await eval(f"{fn_name}()", env))
+            result = str(await eval(f"{fn_name}()", env))
 
-            out = ">>> " + code + "\n"
-            output = "```py\n{}\n\n{}```".format(out, result)
+            output = f"```py\n>>> {code}\n\n\n{result}```"
 
             if len(output) > 2000:
                 await ctx.send("The output is too long?")
             else:
-                await ctx.send(output.format(result))
+                await ctx.send(output)
         except Exception as e:
-            await ctx.send("```py\n>>> {}\n\n\n{}```".format(code, e))
+            await ctx.send(f"```py\n>>> {code}\n\n\n{e}```")
+            raise e
 
 
 def setup(bot):
