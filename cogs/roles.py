@@ -1,80 +1,11 @@
 from discord.ext import commands
 import discord
 from config import GUILD_ID, MOD_ID
-
-PRONOUNS_DIVIDER = 931027735474753556
-PRONOUNS_VIEW = {
-    "he/him": {"roleId": 931028572083216444},
-    "she/her": {"roleId": 931028641654132816},
-    "they/them": {"roleId": 931028678396227594},
-    "Any": {"roleId": 931029765794717776},
-    "Other/Ask me": {"roleId": 931028748973768825},
-}
-
-COLOURS_VIEW = {
-    "Silver": {"roleId": 938915036330606692, "emoji": "silver:938928363211472998"},
-    "Gray": {"roleId": 938914712115101817, "emoji": "gray:938928363362467870"},
-    "Red": {"roleId": 938909726945722438, "emoji": "red:938928064446988348"},
-    "Maroon": {"roleId": 938915198272671786, "emoji": "maroon:938928064132423793"},
-    "Yellow": {"roleId": 938912658936180757, "emoji": "yellow:938928064426041354"},
-    "Olive": {"roleId": 938913871282978846, "emoji": "olive:938928064170188901"},
-    "Lime": {"roleId": 938912477570301952, "emoji": "lime:938928064447004763"},
-    "Green": {"roleId": 938913738210291752, "emoji": "green:938928064136626257"},
-    "Aqua": {"roleId": 938912702066216971, "emoji": "aqua:938928064279224371"},
-    "Teal": {"roleId": 938913907165253672, "emoji": "teal:938928063830450267"},
-    "Blue": {"roleId": 938912524521336874, "emoji": "blue:938928064400863252"},
-    "Navy": {"roleId": 938913720866844714, "emoji": "navy:938928064224702484"},
-    "Fuchsia": {"roleId": 938912572420268072, "emoji": "fuchsia:938928064228888616"},
-    "Purple": {"roleId": 938913675195080774, "emoji": "purple:938928064212111421"},
-}
-
-META_VIEW = {
-    "Announcement pings": {"roleId": 934851594204360756, "emoji": "📢"},
-    "Voice chat ping": {"roleId": 944388390021906552, "emoji": "🎙️"},
-}
-
-LANG_DIVIDER = 928718017678958613
-LANGUAGE_VIEW = {
-    "C": {"roleId": 927942745639780432, "emoji": "c_:927947447425204304"},
-    "C#": {"roleId": 928784767254663228, "emoji": "csharp:928785241697583104"},
-    "C++": {"roleId": 927950084329582652, "emoji": "cpp:927947734151999488"},
-    "Go": {"roleId": 928780947925659698, "emoji": "go:927947447383253042"},
-    "HTML/CSS": {"roleId": 928770500187009175, "emoji": "html:928791843741769739"},
-    "Java": {"roleId": 927942713226190908, "emoji": "java:927947447311958057"},
-    "Javascript": {"roleId": 927943172624105472, "emoji": "javascript:927947447022534696"},
-    "Kotlin": {"roleId": 927950071721500792, "emoji": "kotlin:927948108351045642"},
-    "PHP": {"roleId": 927943198381334598, "emoji": "php:927947447324536832"},
-    "Python": {"roleId": 927942689381552138, "emoji": "python:927948531229139014"},
-    "Ruby": {"roleId": 928780488896839820, "emoji": "ruby:927947448528273408"},
-    "Rust": {"roleId": 927943241255505931, "emoji": "rust:928792599748288542"},
-    "Typescript": {"roleId": 928780873267040266, "emoji": "typescript:927947446301106257"},
-}
-
-INTEREST_DIVIDER = 928722640867319859
-INTEREST_VIEW = {
-    "3D Printing": {"roleId": 928723382751592518, "emoji": "3dprinting:933127502711361607"},
-    "Circuits": {"roleId": 928724312502988820, "emoji": "transistor:933129000941912144"},
-    "Cyber Security": {"roleId": 928724530673901669, "emoji": "firewall:933127502921105408"},
-    "Game Dev/Modding": {"roleId": 933008738103742464, "emoji": "gamedev:933127502451331093"},
-    "Math": {"roleId": 938949433016586270, "emoji": "math:938949118330556518"},
-    "Networking": {"roleId": 928785182406873188, "emoji": "router:933127503902543883"},
-    "Programming": {"roleId": 928786544440000522, "emoji": "code:933127502963048488"},
-}
-
-OS_DIVIDER = 928737228539174992
-OS_VIEW = {
-    "Arch": {"roleId": 928737067851206696, "emoji": "arch:927947448788353104"},
-    "BSD": {"roleId": 928780279802372136, "emoji": "bsd:927947447139958795"},
-    "Debian/Ubuntu": {"roleId": 928736847755116574, "emoji": "debian:927947446875734096"},
-    "Fedora/RedHat": {"roleId": 928736994643837038, "emoji": "fedora:927947448301785130"},
-    "Linux": {"roleId": 928722740821753937, "emoji": "linux:927948388853506138"},
-    "MacOS": {"roleId": 928722779161890816, "emoji": "apple:931974640455274506"},
-    "Windows": {"roleId": 928722827765481502, "emoji": "windows:927947446565371904"},
-}
+import yaml
 
 
 class View(discord.ui.View):
-    def __init__(self, items=None, **kwargs):
+    def __init__(self, items: discord.ui.Item = None, **kwargs):
         super().__init__(**kwargs)
         if items:
             self.add_item(items)
@@ -89,7 +20,7 @@ class RoleDropdown(discord.ui.Select):
 
         roles = [x.id for x in member.roles]
         options = [
-            discord.SelectOption(label=name, default=value["roleId"] in roles,
+            discord.SelectOption(label=name, default=value["id"] in roles,
                                  emoji=value["emoji"] if "emoji" in value else None)
             for name, value in view.items()
         ]
@@ -102,7 +33,7 @@ class RoleDropdown(discord.ui.Select):
 
         # Add or remove roles as needed
         for name, value in self.role_view.items():
-            role_id = value["roleId"]
+            role_id = value["id"]
             role = self.member.guild.get_role(role_id)
 
             if name in self.values and role not in member.roles:  # role is selected and not assigned yet
@@ -126,86 +57,54 @@ class RoleMenu(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="🏷", label="Pronouns", custom_id="RoleMenu_Pronouns", row=1)
-    async def pronouns(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(PRONOUNS_VIEW, interaction.user, PRONOUNS_DIVIDER))
-        await interaction.response.send_message("Please select your pronouns roles below.",
-                                                view=view, ephemeral=True)
+        with open("roles.yaml") as fd:
+            config = yaml.full_load(fd)
 
-    @discord.ui.button(emoji="🎨", label="Colours", custom_id="RoleMenu_Colours", row=1)
-    async def colours(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(COLOURS_VIEW, interaction.user, max_roles=1))
-        await interaction.response.send_message("Please select a colour from the roles below",
-                                                view=view, ephemeral=True)
+        for name, values in config.items():
+            def make_callback(name_, values_):
+                # Command body
+                async def callback(interaction: discord.Interaction, _=None):  # _=None to satisfy self param
+                    # Respond with corresponding dropdown
+                    view = View(RoleDropdown(values_["roles"], interaction.user, divider=values_.get("divider")))
+                    await interaction.response.send_message(f"Please select your {name_.lower()} roles below:",
+                                                            view=view, ephemeral=True)
 
-    @discord.ui.button(emoji="🔔", label="Ping", custom_id="RoleMenu_Meta", row=1)
-    async def meta(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(META_VIEW, interaction.user))
-        await interaction.response.send_message("Please select your server roles below.",
-                                                view=view, ephemeral=True)
+                return callback
 
-    @discord.ui.button(emoji="⌨️", label="Languages", custom_id="RoleMenu_Languages", row=2)
-    async def languages(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(LANGUAGE_VIEW, interaction.user, LANG_DIVIDER))
-        await interaction.response.send_message("Please select from the language roles below.",
-                                                view=view, ephemeral=True)
-
-    @discord.ui.button(emoji="🖥️", label="OS", custom_id="RoleMenu_OS", row=2)
-    async def os(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(OS_VIEW, interaction.user, OS_DIVIDER))
-        await interaction.response.send_message("Please select from the OS roles below.",
-                                                view=view, ephemeral=True)
-
-    @discord.ui.button(emoji="🗂️", label="Interests", custom_id="RoleMenu_Interests", row=2)
-    async def interests(self, button: discord.ui.Button, interaction: discord.Interaction):
-        view = View(RoleDropdown(INTEREST_VIEW, interaction.user, INTEREST_DIVIDER))
-        await interaction.response.send_message("Please select from the interest roles below.",
-                                                view=view, ephemeral=True)
+            # Add button
+            button = discord.ui.Button(emoji=values.get("emoji"), label=name, custom_id="RoleMenu_" + name,
+                                       row=values["row"])
+            button.callback = make_callback(name, values)
+            self.add_item(button)
 
 
 class Roles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
 
-    @commands.command(message_command=False, slash_command=True, ephemeral=True,
-                      slash_command_guilds=[GUILD_ID])
-    async def pronounroles(self, ctx: commands.Context):
-        """Creates a role picker for your pronouns"""
-        await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(PRONOUNS_VIEW, ctx.author, divider=PRONOUNS_DIVIDER))
-        await ctx.send("Please select your pronouns roles below.", view=view, ephemeral=True)
+        # Programatically generate commands from config file
 
-    @commands.command(message_command=False, slash_command=True, ephemeral=True,
-                      slash_command_guilds=[GUILD_ID])
-    async def colourroles(self, ctx: commands.Context):
-        """Creates a role picker for colours"""
-        await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(COLOURS_VIEW, ctx.author))
-        await ctx.send("Please select a colour from the roles below.", view=view, ephemeral=True)
+        with open("roles.yaml") as fd:
+            config = yaml.full_load(fd)
 
-    @commands.command(message_command=False, slash_command=True, ephemeral=True,
-                      slash_command_guilds=[GUILD_ID])
-    async def langroles(self, ctx: commands.Context):
-        """Creates a role picker for programming languages"""
-        await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(LANGUAGE_VIEW, ctx.author, divider=LANG_DIVIDER))
-        await ctx.send("Please select from the language roles below.", view=view, ephemeral=True)
+        for name, values in config.items():
+            name = name.lower()
+            a_an = "an" if name[0] in ["a", "e", "i", "o", "u"] else "a"
 
-    @commands.command(message_command=False, slash_command=True, ephemeral=True,
-                      slash_command_guilds=[GUILD_ID])
-    async def interestroles(self, ctx: commands.Context):
-        """Creates a role picker for interests"""
-        await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(INTEREST_VIEW, ctx.author, divider=INTEREST_DIVIDER))
-        await ctx.send("Please select from the interest roles below.", view=view, ephemeral=True)
+            def make_callback(name_, values_):
+                # Command body
+                async def callback(interaction: discord.ApplicationContext, _=None):  # _=None to satisfy self param
+                    # Respond with corresponding dropdown
+                    view = View(RoleDropdown(values_["roles"], interaction.user, divider=values_.get("divider")))
+                    await interaction.respond(f"Please select your {name_} roles below:",
+                                              view=view, ephemeral=True)
 
-    @commands.command(message_command=False, slash_command=True, ephemeral=True,
-                      slash_command_guilds=[GUILD_ID])
-    async def osroles(self, ctx: commands.Context):
-        """Creates a role picker for operating systems"""
-        await ctx.message.delete(delay=2)  # Deletes command in chat
-        view = View(RoleDropdown(OS_VIEW, ctx.author, divider=OS_DIVIDER))
-        await ctx.send("Please select from the OS roles below.", view=view, ephemeral=True)
+                return callback
+
+            # Register command
+            command = discord.SlashCommand(make_callback(name, values), guild_ids=[GUILD_ID],
+                                           name=f"{name}roles", description=f"Create {a_an} {name} role picker")
+            self.bot.add_application_command(command)
 
     @commands.command()
     @commands.has_role(MOD_ID)

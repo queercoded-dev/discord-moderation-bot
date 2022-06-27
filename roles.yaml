@@ -1,0 +1,190 @@
+Pronoun:
+    emoji: 🏷
+    divider_role: 931027735474753556
+    row: 1
+    roles:
+      he/him:
+        id: 931028572083216444
+      she/her:
+        id: 931028641654132816
+      they/them:
+        id: 931028678396227594
+      any:
+        id: 931029765794717776
+      Other/Ask me:
+        id: 931028748973768825
+
+Colour:
+    emoji: 🎨
+    row: 1
+    roles:
+      Silver:
+        id: 938915036330606692
+        emoji: silver:938928363211472998
+      Gray:
+        id: 938914712115101817
+        emoji: gray:938928363362467870
+      Red:
+        id: 938909726945722438
+        emoji: red:938928064446988348
+      Maroon:
+        id: 938915198272671786
+        emoji: maroon:938928064132423793
+      Yellow:
+        id: 938912658936180757
+        emoji: yellow:938928064426041354
+      Olive:
+        id: 938913871282978846
+        emoji: olive:938928064170188901
+      Lime:
+        id: 938912477570301952
+        emoji: lime:938928064447004763
+      Green:
+        id: 938913738210291752
+        emoji: green:938928064136626257
+      Aqua:
+        id: 938912702066216971
+        emoji: aqua:938928064279224371
+      Teal:
+        id: 938913907165253672
+        emoji: teal:938928063830450267
+      Blue:
+        id: 938912524521336874
+        emoji: blue:938928064400863252
+      Navy:
+        id: 938913720866844714
+        emoji: navy:938928064224702484
+      Fuchsia:
+        id: 938912572420268072
+        emoji: fuchsia:938928064228888616
+      Purple:
+        id: 938913675195080774
+        emoji: purple:938928064212111421
+
+Ping:
+    emoji: 🔔
+    row: 1
+    roles:
+      Announcements:
+        id: 934851594204360756
+        emoji: 📢
+      Voice chat ping:
+        id: 944388390021906552
+        emoji: 🎙️
+
+Language:
+    emoji: ⌨️
+    divider: 928718017678958613
+    row: 2
+    roles:
+      C:
+        id: 927942745639780432
+        emoji: c_:927947447425204304
+      C#:
+        id: 928784767254663228
+        emoji: csharp:928785241697583104
+      C++:
+        id: 927950084329582652
+        emoji: cpp:927947734151999488
+      Go:
+        id: 928780947925659698
+        emoji: go:927947447383253042
+      HTML/CSS:
+        id: 928770500187009175
+        emoji: html:928791843741769739
+      Java:
+        id: 927942713226190908
+        emoji: java:927947447311958057
+      Javascript:
+        id: 927943172624105472
+        emoji: javascript:927947447022534696
+      Kotlin:
+        id: 927950071721500792
+        emoji: kotlin:927948108351045642
+      PHP:
+        id: 927943198381334598
+        emoji: php:927947447324536832
+      Python:
+        id: 927942689381552138
+        emoji: python:927948531229139014
+      Ruby:
+        id: 928780488896839820
+        emoji: ruby:927947448528273408
+      Rust:
+        id: 927943241255505931
+        emoji: rust:928792599748288542
+      Typescript:
+        id: 928780873267040266
+        emoji: typescript:927947446301106257
+
+OS:
+    emoji: 🖥️
+    divider: 928737228539174992
+    row: 2
+    roles:
+      C:
+        id: 927942745639780432
+        emoji: c_:927947447425204304
+      C#:
+        id: 928784767254663228
+        emoji: csharp:928785241697583104
+      C++:
+        id: 927950084329582652
+        emoji: cpp:927947734151999488
+      Go:
+        id: 928780947925659698
+        emoji: go:927947447383253042
+      HTML/CSS:
+        id: 928770500187009175
+        emoji: html:928791843741769739
+      Java:
+        id: 927942713226190908
+        emoji: java:927947447311958057
+      Javascript:
+        id: 927943172624105472
+        emoji: javascript:927947447022534696
+      Kotlin:
+        id: 927950071721500792
+        emoji: kotlin:927948108351045642
+      PHP:
+        id: 927943198381334598
+        emoji: php:927947447324536832
+      Python:
+        id: 927942689381552138
+        emoji: python:927948531229139014
+      Ruby:
+        id: 928780488896839820
+        emoji: ruby:927947448528273408
+      Rust:
+        id: 927943241255505931
+        emoji: rust:928792599748288542
+      Typescript:
+        id: 928780873267040266
+        emoji: typescript:927947446301106257
+
+Interest:
+    emoji: 🗂️
+    divider: 928722640867319859
+    row: 2
+    roles:
+      3D Printing:
+        id: 928723382751592518
+        emoji: 3dprinting:933127502711361607
+      Circuits:
+        id: 928724312502988820
+        emoji: transistor:933129000941912144
+      Cyber Security:
+        id: 928724530673901669
+        emoji: firewall:933127502921105408
+      Game Dev/Modding:
+        id: 933008738103742464
+        emoji: gamedev:933127502451331093
+      Math:
+        id: 938949433016586270
+        emoji: math:938949118330556518
+      Networking:
+        id: 928785182406873188
+        emoji: router:933127503902543883
+      Programming:
+        id: 928786544440000522
+        emoji: code:933127502963048488
