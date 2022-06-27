@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from config import GUILD_ID, MAIN
+from config import MAIN
 from utils.utils import LETTERS
 
 
