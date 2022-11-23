@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
-from config import GUILD_ID, STARBOARD_ID, MAIN
+from config import GUILD_ID, SOBBOARD_ID, MAIN
 from utils.db_utils import find_docs, insert_doc
 
-STAR = "⭐"
+STAR = "😭"
 STAR_THRESHOLD = 5
 
-STAR_CONTENT = "⭐ {count} | Message in {channel} by {author} was starred"
+STAR_CONTENT = "😭 {count} | Message in {channel} by {author} had us sobbing"
 
 
 def message_to_embed(message: discord.Message):
@@ -28,7 +28,7 @@ def message_to_embed(message: discord.Message):
     return em
 
 
-class Starboard(commands.Cog):
+class Sobboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
 
@@ -51,7 +51,7 @@ class Starboard(commands.Cog):
             return
         if str(payload.emoji) != STAR:
             return
-        if payload.channel_id == STARBOARD_ID:  # Ignore the starboard channel ofc
+        if payload.channel_id == SOBBOARD_ID:  # Ignore the sobboard channel ofc
             return
 
         message = await self.try_message(payload.channel_id, payload.message_id)
@@ -62,13 +62,13 @@ class Starboard(commands.Cog):
         if not stars:  # Also shouldn't happen
             return
 
-        entry = await find_docs("starboard",
+        entry = await find_docs("sobboard",
                                 {"channel": str(payload.channel_id), "message": str(payload.message_id)}, 1)
         entry = entry[0] if entry else None
 
         if entry:
             destination = entry["destination"]
-            star_msg = await self.try_message(STARBOARD_ID, int(destination))
+            star_msg = await self.try_message(SOBBOARD_ID, int(destination))
             if not star_msg:  # If message has been deleted, ignore it
                 return
 
@@ -77,13 +77,13 @@ class Starboard(commands.Cog):
                                                             author=message.author.mention))
 
         elif stars.count >= STAR_THRESHOLD:  # Enough stars to make a new entry
-            channel = self.bot.get_channel(STARBOARD_ID)
+            channel = self.bot.get_channel(SOBBOARD_ID)
             star_msg = await channel.send(
                 STAR_CONTENT.format(count=stars.count, channel=message.channel.mention, author=message.author.mention),
                 embed=message_to_embed(message)
             )
 
-            await insert_doc("starboard", {
+            await insert_doc("sobboard", {
                 "channel": str(message.channel.id),
                 "message": str(message.id),
                 "destination": str(star_msg.id),
@@ -91,4 +91,4 @@ class Starboard(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Starboard(bot))
+    bot.add_cog(Sobboard(bot))
