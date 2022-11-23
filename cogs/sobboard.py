@@ -3,10 +3,10 @@ from discord.ext import commands
 from config import GUILD_ID, SOBBOARD_ID, MAIN
 from utils.db_utils import find_docs, insert_doc
 
-STAR = "😭"
-STAR_THRESHOLD = 5
+SOB = "😭"
+SOB_THRESHOLD = 5
 
-STAR_CONTENT = "😭 {count} | Message in {channel} by {author} had us sobbing"
+SOB_CONTENT = "😭 {count} | Message in {channel} by {author} had us sobbing"
 
 
 def message_to_embed(message: discord.Message):
@@ -49,7 +49,7 @@ class Sobboard(commands.Cog):
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if not payload.guild_id or payload.guild_id != GUILD_ID:
             return
-        if str(payload.emoji) != STAR:
+        if str(payload.emoji) != SOB:
             return
         if payload.channel_id == SOBBOARD_ID:  # Ignore the sobboard channel ofc
             return
@@ -58,11 +58,11 @@ class Sobboard(commands.Cog):
         if not message:  # Shouldn't happen tbh
             return
 
-        stars = discord.utils.get(message.reactions, emoji=STAR)
+        stars = discord.utils.get(message.reactions, emoji=SOB)
         if not stars:  # Also shouldn't happen
             return
 
-        entry = await find_docs("sobboard",
+        entry = await find_docs("starboard",
                                 {"channel": str(payload.channel_id), "message": str(payload.message_id)}, 1)
         entry = entry[0] if entry else None
 
@@ -72,18 +72,18 @@ class Sobboard(commands.Cog):
             if not star_msg:  # If message has been deleted, ignore it
                 return
 
-            await star_msg.edit(content=STAR_CONTENT.format(count=stars.count,
+            await star_msg.edit(content=SOB_CONTENT.format(count=stars.count,
                                                             channel=message.channel.mention,
                                                             author=message.author.mention))
 
-        elif stars.count >= STAR_THRESHOLD:  # Enough stars to make a new entry
+        elif stars.count >= SOB_THRESHOLD:  # Enough stars to make a new entry
             channel = self.bot.get_channel(SOBBOARD_ID)
             star_msg = await channel.send(
-                STAR_CONTENT.format(count=stars.count, channel=message.channel.mention, author=message.author.mention),
+                SOB_CONTENT.format(count=stars.count, channel=message.channel.mention, author=message.author.mention),
                 embed=message_to_embed(message)
             )
 
-            await insert_doc("sobboard", {
+            await insert_doc("starboard", {
                 "channel": str(message.channel.id),
                 "message": str(message.id),
                 "destination": str(star_msg.id),
