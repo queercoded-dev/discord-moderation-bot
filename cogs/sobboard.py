@@ -16,7 +16,7 @@ def message_to_embed(message: discord.Message):
 
     if message.attachments:
         attachment = message.attachments[0]
-        if attachment.content_type in ["image/jpeg", "image/png", "image/gif"]:
+        if attachment.content_type in ["image/jpeg", "image/png"]:
             em.set_image(url=attachment.url)
         else:
             em.set_footer(text="📎 Some attachments could not be shown")
