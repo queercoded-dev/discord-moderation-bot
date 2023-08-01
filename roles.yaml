@@ -113,13 +113,12 @@ Language:
       Rust:
         id: 927943241255505931
         emoji: rust:928792599748288542
-      Typescript:
-        id: 928780873267040266
-        emoji: typescript:927947446301106257
       Swift:
         id: 1122925167706914866
         emoji: swift:1122924796125134888
-
+      Typescript:
+        id: 928780873267040266
+        emoji: typescript:927947446301106257
 
 OS:
     emoji: 🖥️
