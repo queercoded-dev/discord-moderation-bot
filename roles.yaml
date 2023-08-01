@@ -116,6 +116,10 @@ Language:
       Typescript:
         id: 928780873267040266
         emoji: typescript:927947446301106257
+      Swift:
+        id: 1122925167706914866
+        emoji: swift:1122924796125134888
+
 
 OS:
     emoji: 🖥️
