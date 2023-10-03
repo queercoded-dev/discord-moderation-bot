@@ -142,7 +142,7 @@ class Moderation(commands.Cog):
         await self.mod_action_embed(author=ctx.author, target=member,
                                     desc=f"**🔇 Timed out {member.mention}**" +
                                          (f" **for**:\n```{reason}```" if reason else ""),
-                                    fields={"Duration": duration_str, "Unmute": dynamic_str, "Appeal link": f"[Please click here to appeal this ban]({APPEAL_URL})"})
+                                    fields={"Duration": duration_str, "Unmute": dynamic_str})
 
     @commands.command()
     @commands.has_role(MOD_ID)
