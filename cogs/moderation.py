@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from config import MOD_ID, RED, YELLOW, LOG_ID, GUILD_ID
+from config import MOD_ID, RED, YELLOW, LOG_ID, GUILD_ID, APPEAL_URL
 from cogs.logs import MODERATION
 from utils.utils import pos_int, RelativeTime, format_time, utc_now
 from utils.db_utils import insert_doc, find_docs, del_doc
@@ -142,7 +142,7 @@ class Moderation(commands.Cog):
         await self.mod_action_embed(author=ctx.author, target=member,
                                     desc=f"**🔇 Timed out {member.mention}**" +
                                          (f" **for**:\n```{reason}```" if reason else ""),
-                                    fields={"Duration": duration_str, "Unmute": dynamic_str})
+                                    fields={"Duration": duration_str, "Unmute": dynamic_str, "Appeal link": f"[Please click here to appeal this ban]({APPEAL_URL})"})
 
     @commands.command()
     @commands.has_role(MOD_ID)
@@ -244,6 +244,9 @@ class Moderation(commands.Cog):
         em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
         if duration:
             em.add_field(name="Duration", value=duration_str)
+        
+        em.add_field(name="Appeal link", value=f"[Please click here to appeal this ban]({APPEAL_URL})", inline=False)
+
         await ctx.send(embed=em)
 
         await self.mod_action_embed(author=ctx.author, target=user,
