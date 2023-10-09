@@ -116,8 +116,7 @@ class OSEMmodal(discord.ui.Modal):
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
-        # TODO: Uncomment this. If alice pushes this everyone gets to laugh
-        # self.unban_loop.start()
+        self.unban_loop.start()
 
     async def mod_action_embed(self, title=discord.Embed.Empty, desc=discord.Embed.Empty,
                                author: discord.Member = None, target: Union[discord.Member, discord.User] = None,
