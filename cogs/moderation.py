@@ -293,7 +293,7 @@ class Moderation(commands.Cog):
         discord.OptionChoice(name="Days", value=24 * 60 * 60),
     ])
     async def ban(self, ctx: discord.ApplicationContext, user: discord.User,
-                  duration: discord.Option(int, "The duration of the mute"), units: int,
+                  duration: discord.Option(int, "The duration of the mute", required=False), units: int,
                   reason: discord.Option(required=False)):
         """
         Ban a user
