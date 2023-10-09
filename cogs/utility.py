@@ -4,20 +4,19 @@ from config import MAIN
 from utils.utils import LETTERS
 
 
-class Utility(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+class PollModal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="New Poll")
 
-    @commands.command()
-    async def poll(self, ctx: commands.Context, question, *, options):
-        """
-        Create a poll
-        Each poll option should be placed on a new line
-        """
-        em = discord.Embed(title=f"📊 {question}", colour=MAIN, timestamp=discord.utils.utcnow(), description="")
-        em.set_footer(text=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
+        self.add_item(discord.ui.InputText(label="Question"))
+        self.add_item(discord.ui.InputText(label="Options", placeholder="Enter each answer on a new line",
+                                           style=discord.InputTextStyle.multiline))
 
-        options = options.split("\n")
+    async def callback(self, interaction: discord.Interaction):
+        question = self.children[0].value
+        options = self.children[1].value.split("\n")
+
+        em = discord.Embed(title=f"📊 {question}", colour=MAIN, description="")
 
         lines = 0  # Number of lines we were able to add to the embed
         for index, option in enumerate(options[:len(LETTERS)]):
@@ -28,10 +27,21 @@ class Utility(commands.Cog):
             else:
                 break
 
-        msg = await ctx.send(embed=em)
+        await interaction.response.send_message(embed=em)
+        message = await interaction.original_message()
 
         for i in range(lines + 1):
-            await msg.add_reaction(LETTERS[i])
+            await message.add_reaction(LETTERS[i])
+
+
+class Utility(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @discord.slash_command()
+    async def poll(self, ctx: discord.ApplicationContext):
+        """Create a poll"""
+        await ctx.send_modal(PollModal())
 
 
 def setup(bot):

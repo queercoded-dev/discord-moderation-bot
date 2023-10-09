@@ -82,37 +82,17 @@ class Roles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
 
-        # Programatically generate commands from config file
-
-        with open("roles.yaml") as fd:
-            config = yaml.full_load(fd)
-
-        for name, values in config.items():
-            name = name.lower()
-            a_an = "an" if name[0] in ["a", "e", "i", "o", "u"] else "a"
-
-            def make_callback(name_, values_):
-                # Command body
-                async def callback(interaction: discord.ApplicationContext, _=None):  # _=None to satisfy self param
-                    # Respond with corresponding dropdown
-                    view = View(RoleDropdown(values_["roles"], interaction.user, divider=values_.get("divider")))
-                    await interaction.respond(f"Please select your {name_} roles below:",
-                                              view=view, ephemeral=True)
-
-                return callback
-
-            # Register command
-            command = discord.SlashCommand(make_callback(name, values), guild_ids=[GUILD_ID],
-                                           name=f"{name}roles", description=f"Create {a_an} {name} role picker")
-            self.bot.add_application_command(command)
-
-    @commands.command()
-    @commands.has_role(MOD_ID)
-    async def attachroles(self, ctx, message: discord.Message):
+    @discord.message_command(name="Attach role menu")
+    @discord.default_permissions(manage_messages=True)
+    async def attach_roles(self, ctx: discord.ApplicationContext, message: discord.Message):
+        """
+        Attach the role menu to a message
+        """
         if message.author.id != self.bot.user.id:
-            raise commands.BadArgument
-
-        await message.edit(view=RoleMenu())
+            await ctx.respond("The selected message must have been sent by the bot", ephemeral=True)
+        else:
+            await message.edit(view=RoleMenu())
+            await ctx.respond("Attached", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_ready(self):

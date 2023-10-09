@@ -25,15 +25,20 @@ def insert_returns(body):
         insert_returns(body[-1].body)
 
 
+async def autocomplete_cogs(ctx: discord.AutocompleteContext):
+    return [x[5:] for x in ctx.bot.extensions.keys()]
+
+
 class Owner(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    @commands.is_owner()
-    async def reload(self, ctx: commands.Context, cog: str):
+    @discord.slash_command()
+    @discord.default_permissions(manage_guild=True)
+    async def reload(self, ctx: discord.ApplicationContext,
+                     cog: discord.Option(str, autocomplete=discord.utils.basic_autocomplete(autocomplete_cogs))):
         """
-        Reloads a cog and updates changes to it
+        Applies changes to a loaded cog
         """
         try:
             self.bot.reload_extension("cogs." + cog)
@@ -41,7 +46,7 @@ class Owner(commands.Cog):
         except Exception as error:
             await ctx.send(f"```py\n{error}```")
             return
-        await ctx.send("✅")
+        await ctx.respond("✅")
         print(f"------------Reloaded {cog}------------")
 
     @commands.command()
