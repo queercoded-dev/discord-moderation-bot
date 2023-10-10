@@ -40,7 +40,8 @@ def num_suffix(n):
 
 
 def make_welcome(pfp: BytesIO, member: discord.Member):
-    tag = str(member)  # username#1234
+    # One day str(member) will work this out on its own. Probably pycord 2.5 but until then:
+    tag = str(member) if member.discriminator != "0" else member.name  # username#1234 or username
     joinpos = member.guild.member_count
 
     bg = Image.open(WELCOME_BG)  # open the welcome background
@@ -69,7 +70,7 @@ def make_welcome(pfp: BytesIO, member: discord.Member):
 
 
 def make_leave(pfp: BytesIO, member: discord.Member):
-    tag = str(member)  # username#1234
+    tag = str(member) if member.discriminator != "0" else member.name  # username#1234 or username
     join_pos = member.guild.member_count
 
     bg = Image.open(LEAVE_BG)  # open the goodbye background

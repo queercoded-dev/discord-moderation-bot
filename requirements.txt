@@ -1,6 +1,6 @@
 python-dotenv
 Pillow
-py-cord~=2.0.0
+py-cord~=2.4.0
 motor
 pymongo[srv]
 pyyaml
