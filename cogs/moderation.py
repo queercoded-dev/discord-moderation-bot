@@ -1,14 +1,15 @@
 import discord
 from discord.ext import commands, tasks
-from config import MOD_ID, RED, YELLOW, LOG_ID, GUILD_ID, APPEAL_URL
+from config import RED, YELLOW, LOG_ID, GUILD_ID, APPEAL_URL
 from cogs.logs import MODERATION
-from utils.utils import pos_int, RelativeTime, format_time, utc_now
+from utils.utils import format_time, utc_now
 from utils.db_utils import insert_doc, find_docs, del_doc
 import datetime as dt
 from typing import Union
 from random import randint
 import re
 from config import GREEN
+from io import BytesIO
 
 EMBED_DESC_LIMIT = 4096
 
@@ -118,6 +119,30 @@ class ReasonModal(discord.ui.Modal):
         )
 
 
+def messages_to_file(messages: list[discord.Message]) -> discord.File:
+    output = ""
+
+    for message in messages[::-1]:
+        output += f"{message.created_at.isoformat()} | {message.author} ({message.author.id})\n"
+
+        content = []
+        if message.embeds and message.embeds[0].type == "rich":
+            content.append("[embed]")
+        if message.attachments:
+            content.append("[file]")
+        if message.content:
+            content.append(message.content)
+
+        output += " | ".join(content) + "\n\n"
+
+    file = BytesIO()
+
+    file.write(output.encode())
+    file.seek(0)
+
+    return discord.File(file, filename="purged_messages.txt")
+
+
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
@@ -125,7 +150,7 @@ class Moderation(commands.Cog):
 
     async def mod_action_embed(self, title=discord.Embed.Empty, desc=discord.Embed.Empty,
                                author: discord.Member = None, target: Union[discord.Member, discord.User] = None,
-                               fields=None):
+                               fields=None, file: discord.File=None):
         em = discord.Embed(colour=MODERATION, timestamp=utc_now(), title=title, description=desc)
         if author:
             em.set_footer(text=f"By {author.name}", icon_url=author.display_avatar.url)
@@ -140,7 +165,7 @@ class Moderation(commands.Cog):
                 em.add_field(name=name, value=value)
 
         channel = self.bot.get_channel(LOG_ID)
-        await channel.send(embed=em)
+        await channel.send(embed=em, file=file)
 
     @discord.slash_command()
     @discord.default_permissions(manage_messages=True)
@@ -152,16 +177,17 @@ class Moderation(commands.Cog):
             await ctx.respond("Count must be greater than 0", ephemeral=True)
             return
 
-        await ctx.channel.purge(limit=count + 1)  # +1 to account for the ctx message
+        messages = await ctx.channel.purge(limit=count + 1)  # +1 to account for the ctx message
         em = discord.Embed(colour=RED, description=f"{ctx.author.mention} purged {count} messages!")
         em.set_footer(icon_url=ctx.guild.icon.url, text=ctx.guild.name)
         em.timestamp = utc_now()
         await ctx.respond(embed=em)
 
         # Log action
-        # TODO: Log deleted messages
+        file = messages_to_file(messages)
         await self.mod_action_embed(author=ctx.author, title="🔥 Purge",
-                                    desc=f"{ctx.author.mention} purged {count} messages in {ctx.channel.mention}")
+                                    desc=f"{ctx.author.mention} purged {count} messages in {ctx.channel.mention}",
+                                    file=file)
 
     @discord.slash_command()
     @discord.default_permissions(moderate_members=True)
@@ -487,6 +513,7 @@ class Moderation(commands.Cog):
         """
         Add a note to the given user
         """
+
         async def callback(interaction, reason):
             await interaction.response.defer()
             await add_modlog(user, ctx.author, "note", reason)
@@ -509,8 +536,8 @@ class Moderation(commands.Cog):
         for ban in pending_bans:
             _id = ban["_id"]
             user_id = int(ban["user"])
-            timestamp = ban["timestamp"]
-            timestamp.tzinfo = dt.timezone.utc
+            timestamp: dt.datetime = ban["timestamp"]
+            timestamp = timestamp.replace(tzinfo=dt.timezone.utc)
 
             if timestamp < utc_now():
                 await guild.unban(discord.Object(user_id), reason="Temp ban")
