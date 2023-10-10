@@ -9,7 +9,6 @@ from typing import Union
 from random import randint
 import re
 from config import GREEN
-from argparse import ArgumentParser, ArgumentTypeError
 
 EMBED_DESC_LIMIT = 4096
 
@@ -54,23 +53,6 @@ async def can_moderate_user(ctx: discord.ApplicationContext, member: discord.Mem
     return True
 
 
-class CmdArgParser(ArgumentParser):
-    def __init__(self):
-        super().__init__(allow_abbrev=False, add_help=False)
-
-    def error(self, message):
-        raise commands.BadArgument
-
-
-def bool_arg(value):
-    if value.lower() == "true":
-        return True
-    elif value.lower() == "false":
-        return False
-    else:
-        raise ArgumentTypeError
-
-
 class OSEMmodal(discord.ui.Modal):
     def __init__(self, channel: discord.TextChannel, timestamp: bool):
         super().__init__(title="Embed creation")
@@ -111,6 +93,29 @@ class OSEMmodal(discord.ui.Modal):
         message = await self.target_channel.send(embed=em)
 
         await interaction.response.send_message(f"Sent -> {message.jump_url}", embed=em, ephemeral=True)
+
+
+async def reason_modal(ctx: discord.ApplicationContext, func):
+    """
+    This automatically prompts the user for a "reason" with the ReasonModal and passes that on to the inner function
+    """
+    modal = ReasonModal()
+
+    async def callback(response: discord.Interaction):
+        await func(response, modal.children[0].value)
+
+    modal.callback = callback
+
+    await ctx.send_modal(modal)
+
+
+class ReasonModal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="Mod Action")
+
+        self.add_item(
+            discord.ui.InputText(label="Reason (Optional)", style=discord.InputTextStyle.long, required=False)
+        )
 
 
 class Moderation(commands.Cog):
@@ -166,71 +171,72 @@ class Moderation(commands.Cog):
         discord.OptionChoice(name="Days", value=24 * 60 * 60),
     ])
     async def mute(self, ctx: discord.ApplicationContext, member: discord.Member,
-                   duration: discord.Option(int, "The duration of the mute"), units: int,
-                   reason: discord.Option(required=False)):
+                   raw_duration: discord.Option(int, "The duration of the mute", name="duration"), units: int):
         """
         Timeout a user for a given time period
         """
         if not await can_moderate_user(ctx, member):
             return
 
-        # Combine unit/duration args
-
-        if duration < 1:
+        if raw_duration < 1:
             await ctx.respond("Invalid duration", ephemeral=True)
             return
 
-        duration *= units
-        duration = dt.timedelta(seconds=duration)
+        async def callback(interaction, reason):
+            # Combine unit/duration args
+            duration = raw_duration * units
+            duration = dt.timedelta(seconds=duration)
 
-        if duration > dt.timedelta(days=28):
-            await ctx.respond("The max mute length is 28 days", ephemeral=True)
-            return
+            if duration > dt.timedelta(days=28):
+                await interaction.response.send_message("The max mute length is 28 days", ephemeral=True)
+                return
 
-        # Do stuff
+            # Do stuff
 
-        await ctx.defer()
+            await interaction.response.defer()
 
-        try:
-            await member.timeout_for(duration, reason=reason)
-        except discord.Forbidden:
-            await ctx.respond("Unable to mute the user")
-            return
+            try:
+                await member.timeout_for(duration, reason=reason)
+            except discord.Forbidden:
+                await interaction.followup.send("Unable to mute the user")
+                return
 
-        case_num = await add_modlog(member, ctx.author, "timeout", reason, duration)
+            case_num = await add_modlog(member, ctx.author, "timeout", reason, duration)
 
-        # Format duration
+            # Format duration
 
-        duration_str = format_time(duration)
-        end_time = utc_now() + duration
-        dynamic_str = discord.utils.format_dt(end_time, "R")
+            duration_str = format_time(duration)
+            end_time = utc_now() + duration
+            dynamic_str = discord.utils.format_dt(end_time, "R")
 
-        # Contact user
+            # Contact user
 
-        em = discord.Embed(color=RED, timestamp=utc_now())
-        em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
-        em.description = f"You have been muted for {duration_str}\n```{reason}```"
-        can_dm = True
-        try:
-            await member.send(embed=em)
-        except discord.Forbidden:
-            can_dm = False
+            em = discord.Embed(color=RED, timestamp=utc_now())
+            em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
+            em.description = f"You have been muted for {duration_str}\n```{reason}```"
+            can_dm = True
+            try:
+                await member.send(embed=em)
+            except discord.Forbidden:
+                can_dm = False
 
-        # Send response
+            # Send response
 
-        em = discord.Embed(color=YELLOW, timestamp=utc_now())
-        em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+            em = discord.Embed(color=YELLOW, timestamp=utc_now())
+            em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
 
-        em.description = f"{member.mention} has been muted by {ctx.author.mention} for {duration_str}\n" \
-                         f"Unmute: {dynamic_str}"
+            em.description = f"{member.mention} has been muted by {ctx.author.mention} for {duration_str}\n" \
+                             f"Unmute: {dynamic_str}"
 
-        em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
-        await ctx.respond(embed=em)
+            em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
+            await interaction.followup.send(embed=em)
 
-        await self.mod_action_embed(author=ctx.author, target=member,
-                                    desc=f"**🔇 Muted {member.mention}**" +
-                                         (f" **for**:\n```{reason}```" if reason else ""),
-                                    fields={"Duration": duration_str, "Unmute": dynamic_str})
+            await self.mod_action_embed(author=ctx.author, target=member,
+                                        desc=f"**🔇 Muted {member.mention}**" +
+                                             (f" **for**:\n```{reason}```" if reason else ""),
+                                        fields={"Duration": duration_str, "Unmute": dynamic_str})
+
+        await reason_modal(ctx, callback)
 
     @discord.slash_command()
     @discord.default_permissions(moderate_members=True)
@@ -255,35 +261,37 @@ class Moderation(commands.Cog):
 
     @discord.slash_command()
     @discord.default_permissions(manage_messages=True)
-    async def warn(self, ctx: discord.ApplicationContext, member: discord.Member, reason):
+    async def warn(self, ctx: discord.ApplicationContext, member: discord.Member):
         """
         Warn a user
         """
-        # TODO: Multiline
         if not await can_moderate_user(ctx, member):
             return
 
-        await ctx.defer()
+        async def callback(interaction, reason):
+            await interaction.response.defer()
 
-        case_num = await add_modlog(member, ctx.author, "warn", reason)
+            case_num = await add_modlog(member, ctx.author, "warn", reason)
 
-        em = discord.Embed(color=RED, timestamp=utc_now())
-        em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
-        em.description = f"You have been warned for \n```{reason}```"
-        can_dm = True
-        try:
-            await member.send(embed=em)
-        except discord.Forbidden:
-            can_dm = False
+            em = discord.Embed(color=RED, timestamp=utc_now())
+            em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
+            em.description = f"You have been warned for \n```{reason}```"
+            can_dm = True
+            try:
+                await member.send(embed=em)
+            except discord.Forbidden:
+                can_dm = False
 
-        em = discord.Embed(color=RED, timestamp=utc_now())
-        em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-        em.description = f"{member.mention} was warned by {ctx.author.mention} for:\n```{reason}```"
-        em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
-        await ctx.respond(embed=em)
+            em = discord.Embed(color=RED, timestamp=utc_now())
+            em.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+            em.description = f"{member.mention} was warned by {ctx.author.mention} for:\n```{reason}```"
+            em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
+            await ctx.followup.send(embed=em)
 
-        await self.mod_action_embed(author=ctx.author, target=member,
-                                    desc=f"**Warned {member.mention} for:**\n```{reason}```")
+            await self.mod_action_embed(author=ctx.author, target=member,
+                                        desc=f"**Warned {member.mention} for:**\n```{reason}```")
+
+        await reason_modal(ctx, callback)
 
     @discord.slash_command()
     @discord.default_permissions(ban_members=True)
@@ -293,72 +301,77 @@ class Moderation(commands.Cog):
         discord.OptionChoice(name="Days", value=24 * 60 * 60),
     ])
     async def ban(self, ctx: discord.ApplicationContext, user: discord.User,
-                  duration: discord.Option(int, "The duration of the mute", required=False), units: int,
-                  reason: discord.Option(required=False)):
+                  base_duration: discord.Option(int, name="duration", required=False), units: int):
         """
         Ban a user
         """
-        if not await can_moderate_user(ctx, user):
+        member = ctx.guild.get_member(user.id)
+
+        if base_duration < 1:
+            await ctx.respond("Invalid duration", ephemeral=True)
             return
 
-        await ctx.defer()
+        async def callback(interaction, reason):
+            await interaction.response.defer()
 
-        can_dm = True
-        if isinstance(user, discord.Member):
-            if not await can_moderate_user(ctx, user):
-                return
+            can_dm = True
+            if member:
+                if not await can_moderate_user(ctx, member):
+                    return
+
+                em = discord.Embed(color=RED, timestamp=utc_now())
+                em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
+                em.description = f"You have been banned for \n```{reason}```"
+                em.add_field(name="Appeal link", value=f"[Please click here to appeal this ban]({APPEAL_URL})",
+                             inline=False)
+                try:
+                    await user.send(embed=em)
+                except discord.Forbidden:
+                    can_dm = False
+            else:  # discord.User
+                can_dm = False
+
+            await ctx.guild.ban(user, reason=reason, delete_message_days=0)
+
+            duration = base_duration * units if base_duration and units else None
+
+            if duration:
+                duration_delta = dt.timedelta(seconds=duration)
+                end_time = utc_now() + duration_delta
+                duration_str = format_time(duration_delta)
+                dynamic_str = discord.utils.format_dt(end_time, "R")
+
+                await insert_doc("pending", {
+                    "user": str(user.id),
+                    "timestamp": end_time,
+                    "type": "ban",
+                })
+                self.unban_loop.start()
+            else:
+                # Mostly to satisfy IDEs
+                duration_delta = None
+                duration_str = None
+                dynamic_str = None
+
+            case_num = await add_modlog(user, ctx.author, "ban", reason, duration=duration_delta)
 
             em = discord.Embed(color=RED, timestamp=utc_now())
-            em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url)
-            em.description = f"You have been banned for \n```{reason}```"
-            em.add_field(name="Appeal link", value=f"[Please click here to appeal this ban]({APPEAL_URL})",
-                         inline=False)
-            try:
-                await user.send(embed=em)
-            except discord.Forbidden:
-                can_dm = False
-        else:  # discord.User
-            can_dm = False
+            em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+            em.description = f"{user.mention} was banned by {ctx.author.mention}" + \
+                             (f" for:\n```{reason}```" if reason else "")
+            em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
+            if duration:
+                em.add_field(name="Duration", value=duration_str)
 
-        await ctx.guild.ban(user, reason=reason, delete_message_days=0)
+            await ctx.followup.send(embed=em)
 
-        if duration and units:
-            duration *= units
+            await self.mod_action_embed(author=ctx.author, target=user,
+                                        desc=f"**Banned {user.mention}**" +
+                                             (f" **for:**\n```{reason}```" if reason else ""),
+                                        fields={"Duration": duration_str, "Unban": dynamic_str} if duration else None,
+                                        )
 
-            duration_delta = dt.timedelta(seconds=duration)
-            end_time = utc_now() + duration_delta
-            duration_str = format_time(duration_delta)
-            dynamic_str = discord.utils.format_dt(end_time, "R")
-
-            await insert_doc("pending", {
-                "user": str(user.id),
-                "timestamp": end_time,
-                "type": "ban",
-            })
-            self.unban_loop.start()
-        else:
-            # Mostly to satisfy IDEs
-            duration_delta = None
-            duration_str = None
-            dynamic_str = None
-
-        case_num = await add_modlog(user, ctx.author, "ban", reason, duration=duration_delta)
-
-        em = discord.Embed(color=RED, timestamp=utc_now())
-        em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
-        em.description = f"{user.mention} was banned by {ctx.author.mention}" + \
-                         (f" for:\n```{reason}```" if reason else "")
-        em.set_footer(text=f"Case #{case_num}" + " - Unable to dm user" if not can_dm else "")
-        if duration:
-            em.add_field(name="Duration", value=duration_str)
-
-        await ctx.respond(embed=em)
-
-        await self.mod_action_embed(author=ctx.author, target=user,
-                                    desc=f"**Banned {user.mention}**" +
-                                         (f" **for:**\n```{reason}```" if reason else ""),
-                                    fields={"Duration": duration_str, "Unban": dynamic_str} if duration else None,
-                                    )
+        await reason_modal(ctx, callback)
 
     @discord.slash_command()
     @discord.default_permissions(ban_members=True)
@@ -468,6 +481,23 @@ class Moderation(commands.Cog):
         """
         await ctx.send_modal(OSEMmodal(channel, timestamp))
 
+    @discord.slash_command()
+    @discord.default_permissions(manage_messages=True)
+    async def addnote(self, ctx: discord.ApplicationContext, user: discord.User):
+        """
+        Add a note to the given user
+        """
+        async def callback(interaction, reason):
+            await interaction.response.defer()
+            await add_modlog(user, ctx.author, "note", reason)
+
+            em = discord.Embed(color=RED, timestamp=utc_now())
+            em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+            em.description = f"Note added to {user.mention}:\n```{reason}```"
+            await interaction.followup.send(embed=em)
+
+        await reason_modal(ctx, callback)
+
     @tasks.loop(minutes=5)
     async def unban_loop(self):
         await self.bot.wait_until_ready()
@@ -480,6 +510,7 @@ class Moderation(commands.Cog):
             _id = ban["_id"]
             user_id = int(ban["user"])
             timestamp = ban["timestamp"]
+            timestamp.tzinfo = dt.timezone.utc
 
             if timestamp < utc_now():
                 await guild.unban(discord.Object(user_id), reason="Temp ban")
@@ -488,22 +519,6 @@ class Moderation(commands.Cog):
 
         if not pending_bans:  # Don't bother running the loop if there are no bans
             self.unban_loop.stop()
-
-    @discord.slash_command()
-    @discord.default_permissions(manage_messages=True)
-    async def addnote(self, ctx: discord.ApplicationContext, user: discord.User, note):
-        # TODO: Modal
-        """
-        Add a note to the given user
-        """
-        await ctx.defer()
-
-        await add_modlog(user, ctx.author, "note", note)
-
-        em = discord.Embed(color=RED, timestamp=utc_now())
-        em.set_author(name=user.display_name, icon_url=user.display_avatar.url)
-        em.description = f"Note added to {user.mention}:\n```{note}```"
-        await ctx.respond(embed=em)
 
     @discord.slash_command()
     @discord.default_permissions(ban_members=True)
