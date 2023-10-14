@@ -34,9 +34,10 @@ class ToneTag(discord.Cog):
             await ctx.respond("No tone tags detected", ephemeral=True)
             return
 
+        tonetags = set([tag.group(1) for tag in tonetags])
+
         embeds = []
         for tonetag in tonetags:
-            tonetag = tonetag.group(1)
             for tag in self.tags:
                 if tag["tag"] == tonetag or tonetag in tag["aliases"] or tonetag in tag["hiddenAliases"]:
                     em = discord.Embed()
