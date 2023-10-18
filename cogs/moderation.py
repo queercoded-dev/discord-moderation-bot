@@ -56,7 +56,7 @@ async def can_moderate_user(ctx: discord.ApplicationContext, member: discord.Mem
 
 class OSEMmodal(discord.ui.Modal):
     def __init__(self, channel: discord.TextChannel, timestamp: bool):
-        super().__init__(title="Embed creation")
+        super().__init__(title="Embed Creation")
 
         self.target_channel = channel
         self.timestamp = timestamp
@@ -94,6 +94,45 @@ class OSEMmodal(discord.ui.Modal):
         message = await self.target_channel.send(embed=em)
 
         await interaction.response.send_message(f"Sent -> {message.jump_url}", embed=em, ephemeral=True)
+
+
+class EditEmbedModal(discord.ui.Modal):
+    def __init__(self, message: discord.Message):
+        super().__init__(title="Edit Embed")
+
+        self.message = message
+
+        self.add_item(
+            discord.ui.InputText(label="Title", required=False)
+        )
+        self.add_item(
+            discord.ui.InputText(label="Colour", required=False)
+        )
+        self.add_item(
+            discord.ui.InputText(label="Description", required=False, style=discord.InputTextStyle.long)
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        title = self.children[0].value
+        colour = self.children[1].value
+        desc = self.children[2].value
+
+        if colour:
+            # ctx arg is unused so the type doesn't matter
+            # noinspection PyTypeChecker
+            colour = await commands.ColourConverter().convert(None, colour)
+
+        em = self.message.embeds[0]
+        if title:
+            em.title = title
+        if desc:
+            em.description = desc
+        if colour:
+            em.colour = colour
+
+        message = await self.message.edit(embed=em)
+
+        await interaction.response.send_message(f"Edited -> {message.jump_url}", embed=em, ephemeral=True)
 
 
 async def reason_modal(ctx: discord.ApplicationContext, func):
@@ -150,7 +189,7 @@ class Moderation(commands.Cog):
 
     async def mod_action_embed(self, title=discord.Embed.Empty, desc=discord.Embed.Empty,
                                author: discord.Member = None, target: Union[discord.Member, discord.User] = None,
-                               fields=None, file: discord.File=None):
+                               fields=None, file: discord.File = None):
         em = discord.Embed(colour=MODERATION, timestamp=utc_now(), title=title, description=desc)
         if author:
             em.set_footer(text=f"By {author.name}", icon_url=author.display_avatar.url)
@@ -506,6 +545,14 @@ class Moderation(commands.Cog):
         Send a custom embed to a channel
         """
         await ctx.send_modal(OSEMmodal(channel, timestamp))
+
+    @discord.slash_command()
+    @discord.default_permissions(manage_messages=True)
+    async def edit_embed(self, ctx: discord.ApplicationContext, message: discord.Message):
+        """
+        Alter an existing embed
+        """
+        await ctx.send_modal(EditEmbedModal(message))
 
     @discord.slash_command()
     @discord.default_permissions(manage_messages=True)
