@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from config import MAIN
 from utils.utils import LETTERS
+import datetime as dt
 
 
 class PollModal(discord.ui.Modal):
@@ -42,6 +43,27 @@ class Utility(commands.Cog):
     async def poll(self, ctx: discord.ApplicationContext):
         """Create a poll"""
         await ctx.send_modal(PollModal())
+
+    @discord.slash_command()
+    @discord.option("units", description="The unit the duration is in", choices=[
+        discord.OptionChoice(name="Minutes", value=60),
+        discord.OptionChoice(name="Hours", value=60 * 60),
+        discord.OptionChoice(name="Days", value=24 * 60 * 60)])
+    async def eep(self, ctx: discord.ApplicationContext, time: discord.Option(int), units: int):
+        """
+        Temporarily mute yourself. Can only be reversed by a mod
+        """
+        delta = dt.timedelta(seconds=time * units)
+        if delta.days > 28:
+            await ctx.respond("The max timeout is 28 days", ephemeral=True)
+        else:
+            try:
+                await ctx.user.timeout_for(delta, reason="Selfmute")
+            except discord.Forbidden:
+                await ctx.respond(f"I do not have permission to apply a timeout to you", ephemeral=True)
+            else:
+                timeout_end = discord.utils.format_dt(dt.datetime.now() + delta)
+                await ctx.respond(f"Ok, I will mute you until {timeout_end}")
 
 
 def setup(bot):
