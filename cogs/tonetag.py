@@ -4,7 +4,7 @@ import aiohttp
 import re
 
 TAG_ENDPOINT = "https://tonetag.is/api/list"
-TAG_REGEX = r"(?:^|[\s|([{*~`])/([a-z]+)\b"
+TAG_REGEX = r"(?:^|[\s|([{*~`])[/\\]([a-z]+)\b"
 
 
 class ToneTag(discord.Cog):
