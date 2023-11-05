@@ -94,17 +94,13 @@ class Roles(commands.Cog):
         """
         When a role is added or removed, look up what category it is in and determine whether to add a header role
         """
-        if len(old_member.roles) > len(new_member.roles):
-            # Role must have been removed, so find an old role that isn't a new role
-            role = [role for role in old_member.roles if role not in new_member.roles][0]
-        elif len(old_member.roles) < len(new_member.roles):
-            # Role has been added so find a new role that isn't an old role
-            role = [role for role in new_member.roles if role not in old_member.roles][0]
-        else:
-            # Some other kind of update
-            return
+        removed_roles = [role for role in old_member.roles if role not in new_member.roles]
+        added_roles = [role for role in new_member.roles if role not in old_member.roles]
 
-        await self.process_roles(new_member, role)
+        for role in added_roles:
+            await self.process_roles(new_member, role)
+        for role in removed_roles:
+            await self.process_roles(new_member, role)
 
     async def process_roles(self, member: discord.Member, changed_role: discord.Role):
         for detail in self.role_config.values():

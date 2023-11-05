@@ -101,21 +101,23 @@ class Log(commands.Cog):
             await channel.send(embed=em)
 
         elif old.roles != new.roles:  # if roles were changed
-            if [x for x in old.roles if x not in new.roles]:  # role removed
-                aor = "removed from"
-                role = [x for x in old.roles if x not in new.roles][0]
-            elif [x for x in new.roles if x not in old.roles]:  # role added
-                aor = "assigned to"
-                role = [x for x in new.roles if x not in old.roles][0]
-            else:
+            removed_roles = [role.mention for role in old.roles if role not in new.roles]
+            added_roles = [role.mention for role in new.roles if role not in old.roles]
+
+            if not added_roles and not removed_roles:
                 return
 
             # format embed
-            em = discord.Embed(colour=ROLE, description=f"🔰 **Role {aor} {new.mention}**")
-            em.add_field(name="Role:", value=role.mention, inline=False)
+
+            em = discord.Embed(colour=ROLE, description=f"🔰 **Roles updated for {new.mention}**")
             em.set_author(name=new.display_name, icon_url=new.display_avatar.url)
             em.set_footer(text=f"User ID: {new.id}")
             em.timestamp = utc_now()
+
+            if added_roles:
+                em.add_field(name="Added", value=" ".join(added_roles), inline=False)
+            if removed_roles:
+                em.add_field(name="Removed", value=" ".join(removed_roles), inline=False)
 
             await channel.send(embed=em)
 
