@@ -372,7 +372,7 @@ class Moderation(commands.Cog):
         """
         member = ctx.guild.get_member(user.id)
 
-        if base_duration < 1:
+        if base_duration and base_duration < 1:
             await ctx.respond("Invalid duration", ephemeral=True)
             return
 
