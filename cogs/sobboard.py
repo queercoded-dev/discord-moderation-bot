@@ -2,11 +2,29 @@ import discord
 from discord.ext import commands
 from config import GUILD_ID, SOBBOARD_ID, MAIN
 from utils.db_utils import find_docs, insert_doc
+import aiohttp
+import json
 
 SOB = "😭"
 SOB_THRESHOLD = 5
 
 SOB_CONTENT = "😭 {count} | Message in {channel} by {author} had us sobbing"
+
+PK_MESSAGE_ENDPOINT = "https://api.pluralkit.me/v2/messages"
+
+
+async def get_pk_msg_author(message_id: int) -> int | None:
+    # !! This doesnt account for rate limiting so... bad. But lets see how it goes
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"{PK_MESSAGE_ENDPOINT}/{message_id}") as response:
+            if response.status == 429:
+                print("PK rate limited us!")
+
+            if response.ok:
+                body = json.loads(await response.text())
+                return int(body["sender"])
+
+            return None
 
 
 def message_to_embed(message: discord.Message):
@@ -72,14 +90,25 @@ class Sobboard(commands.Cog):
             if not star_msg:  # If message has been deleted, ignore it
                 return
 
+            author = message.author
+            if message.author.bot:
+                if user_id := await get_pk_msg_author(message.id):
+                    if original_author := self.bot.get_user(user_id):
+                        author = original_author
+
             await star_msg.edit(content=SOB_CONTENT.format(count=stars.count,
                                                             channel=message.channel.mention,
-                                                            author=message.author.mention))
+                                                            author=author.mention))
 
         elif stars.count >= SOB_THRESHOLD:  # Enough stars to make a new entry
             channel = self.bot.get_channel(SOBBOARD_ID)
+            author = message.author
+            if message.author.bot:
+                if user_id := await get_pk_msg_author(message.id):
+                    if original_author := self.bot.get_user(user_id):
+                        author = original_author
             star_msg = await channel.send(
-                SOB_CONTENT.format(count=stars.count, channel=message.channel.mention, author=message.author.mention),
+                SOB_CONTENT.format(count=stars.count, channel=message.channel.mention, author=author.mention),
                 embed=message_to_embed(message)
             )
 
