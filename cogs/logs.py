@@ -4,6 +4,7 @@ from config import LOG_ID, RED, GUILD_ID
 from utils.utils import utc_now
 import traceback as tb
 from math import ceil
+import aiohttp
 
 MODERATION = 0x481D24  # dark red
 DELETE = 0xff595e  # red
@@ -13,6 +14,8 @@ JOIN = 0x8ac926  # green
 VOICE = 0x99e5da  # aqua ish
 LEAVE = 0x1982c4  # blue
 NICKNAME = 0x6a4c93  # purple
+
+PK_MESSAGE_ENDPOINT = "https://api.pluralkit.me/v2/messages"
 
 
 def _crop(text: str, chars=2000, border="--Snippet--"):
@@ -36,6 +39,19 @@ def traceback(e: Exception):  # Converts an exception into the full traceback re
     return ''.join(tb.format_exception(None, e, e.__traceback__))
 
 
+async def is_pk_msg(message_id: int) -> bool:
+    # !! This doesnt account for rate limiting so... bad. But lets see how it goes
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"{PK_MESSAGE_ENDPOINT}/{message_id}") as response:
+            if response.status == 429:
+                print("PK rate limited us!")
+            # 404 (not ok) means the message isnt a pk message
+            # 429 (not ok) is rate limited which means we dont know anyway
+            # 200 (ok) means it is a pk message
+            # This means that ok=pk !ok=!pk
+            return response.ok
+
+
 class Log(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: commands.Bot
@@ -48,6 +64,8 @@ class Log(commands.Cog):
         if message.author.bot:  # ignore bots
             return
         if message.channel.id == LOG_ID:
+            return
+        if await is_pk_msg(message.id):
             return
 
         desc = f"🗑️ **Message from {message.author.mention} deleted in {message.channel.mention}**\n" \
