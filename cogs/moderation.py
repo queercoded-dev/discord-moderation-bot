@@ -587,7 +587,12 @@ class Moderation(commands.Cog):
             timestamp = timestamp.replace(tzinfo=dt.timezone.utc)
 
             if timestamp < utc_now():
-                await guild.unban(discord.Object(user_id), reason="Temp ban")
+                try:
+                    await guild.unban(discord.Object(user_id), reason="Temp ban")
+                except discord.NotFound:
+                    # If the user is not banned, just delete the entry
+                    # Could have been manually unbanned
+                    pass
 
                 await del_doc(_id, "pending")
 
