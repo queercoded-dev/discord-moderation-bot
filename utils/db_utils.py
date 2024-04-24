@@ -18,7 +18,7 @@ async def get_doc(_id: str, collection: str, default=None):
 
 async def get_prop(_id: str, collection: str, prop, default=None):
     """db.collection.doc[_id].prop"""
-    doc: dict = await get_doc(collection, _id, default={})
+    doc: dict = await get_doc(_id, collection, default={})
     return doc.get(str(prop), default)
 
 
