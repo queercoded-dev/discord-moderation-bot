@@ -8,7 +8,7 @@ import datetime as dt
 
 # The mongo collection to use for everything here
 DB_COLL = "verification"
-VERIFY_DURATION = dt.timedelta(hours=3)
+VERIFY_DURATION = dt.timedelta(minutes=10)
 
 """
 Verification process is like this:
@@ -43,6 +43,9 @@ Notes:
 - Database use is necessary in order to remember if a user has previously joined
 - Roles are considered the source of truth, db is only for the above
 """
+
+async def is_verified(member: discord.Member) -> bool:
+    return await get_prop(member.id, DB_COLL, "verified", False) == True
 
 
 class VerifyButton(discord.ui.View):
@@ -121,7 +124,7 @@ class Verification(commands.Cog):
         if member.bot: return
 
         # If member has never been verified, give the unverified role
-        if await get_prop(member.id, DB_COLL, "verified", False) == False:
+        if not await is_verified(member):
             await member.add_roles(self.unverified_role)
 
 
@@ -136,13 +139,13 @@ class Verification(commands.Cog):
             await set_prop(member.id, DB_COLL, "verified", True)
 
         # Role added
-        elif self.unverified_role in new.roles and self.unverified_role not in old.roles:  
+        elif self.unverified_role in new.roles and self.unverified_role not in old.roles:
             # If the user has already been verified just remove the role again
-            if await get_prop(member.id, DB_COLL, "verified", False) == True:
+            if await is_verified(member):
                 await member.remove_roles(self.unverified_role, reason="User already verified")
                 return
 
-            # If the user has already been in the server for longer than the verification period, also remove the role
+            # If the user has already been in the server for lger than the verification period, also remove the role
             if (discord.utils.utcnow() - member.joined_at) > VERIFY_DURATION:
                 await member.remove_roles(self.unverified_role, reason="User has already been in server for verification period")
                 return

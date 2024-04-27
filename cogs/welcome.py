@@ -1,8 +1,9 @@
 from discord.ext import commands
 import discord
-from config import GUILD_ID, WELCOME_ID, MAIN_ID, BOT_ID
+from config import GUILD_ID, WELCOME_ID, MAIN_ID, BOT_ID, VERIFY_ID
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
+from cogs.verification import is_verified
 
 
 WELCOME_BG = "./Join.png"
@@ -134,7 +135,10 @@ class WelcomeImage(commands.Cog):
         if not member.bot:
             # Send welcome text in #main
             main = self.bot.get_channel(MAIN_ID)
-            await main.send(f"Welcome {member.mention} :)")
+            await main.send(
+                f"Welcome {member.mention} :)" +
+                (f"\n\nPlease make sure you check out <#{VERIFY_ID}>" if not await is_verified(member) else "")
+            )
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
