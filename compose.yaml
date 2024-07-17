@@ -1,0 +1,16 @@
+services:
+  bot:
+    build:
+      context: .
+    depends_on:
+      - "db"
+    env_file:
+      - path: ./.env
+  db:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    volumes:
+      - botdata:/data/db
+volumes:
+  botdata:
