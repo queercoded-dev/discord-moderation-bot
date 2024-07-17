@@ -130,7 +130,7 @@ class WelcomeImage(commands.Cog):
 
         image = await get_pfp(member)
         image = make_welcome(BytesIO(image), member)
-        await self.send_image(image)
+        await self.send_image(image, "welcome.png")
 
         if not member.bot:
             # Send welcome text in #main
@@ -146,7 +146,7 @@ class WelcomeImage(commands.Cog):
             return
         image = await get_pfp(member)
         image = make_leave(BytesIO(image), member)
-        await self.send_image(image)
+        await self.send_image(image, "goodbye.png")
 
 
 def setup(bot):
