@@ -137,7 +137,7 @@ class WelcomeImage(commands.Cog):
             main = self.bot.get_channel(MAIN_ID)
             await main.send(
                 f"Welcome {member.mention} :)" +
-                (f"\n\nPlease make sure you check out <#{VERIFY_ID}>" if not await is_verified(member) else "")
+                (f"\n\nPlease make sure you check out <#{VERIFY_ID}> within 10 minutes to avoid being kicked." if not await is_verified(member) else "")
             )
 
     @commands.Cog.listener()
