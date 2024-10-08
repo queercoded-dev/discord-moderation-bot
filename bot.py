@@ -22,7 +22,7 @@ class Bot(commands.Bot):
 
 intents = discord.Intents.all()
 bot = Bot(command_prefix=commands.when_mentioned_or(PREFIX), messages=True, case_insensitive=True, owner_ids=OWNERS,
-          allowed_mentions=discord.AllowedMentions(roles=False, everyone=False), intents=intents)
+          debug_guilds=[GUILD_ID])
 
 bot.remove_command("help")
 
