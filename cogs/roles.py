@@ -1,6 +1,8 @@
 from discord.ext import commands
 import discord
 import yaml
+from config import MAIN
+from utils.db_utils import set_prop, get_prop
 
 
 class View(discord.ui.View):
@@ -133,6 +135,48 @@ class Roles(commands.Cog):
 
                 # Don't process other categories since we have already matched one
                 return
+
+
+    @discord.slash_command()
+    @discord.guild_only()
+    async def saveroles(self, ctx: discord.ApplicationContext):
+        """Save your roles so they can be restored if you leave and rejoin"""
+        await ctx.defer(ephemeral=True)
+
+        # Save all roles that are possible to restore
+        roles = [role.id for role in ctx.author.roles if role < ctx.guild.me.top_role]
+        roles = roles[1:]  # First element is always @everyone so trim it
+
+        await set_prop(ctx.author.id, "roles", "roles", roles)
+
+        # Send confirmation
+        em = discord.Embed(title="Roles saved", colour=MAIN,
+                           description=" ".join(f"<@&{roleid}>" for roleid in roles))
+        await ctx.respond(embed=em, ephemeral=True)
+
+
+    @discord.slash_command()
+    @discord.guild_only()
+    async def restoreroles(self, ctx: discord.ApplicationContext):
+        """Restore previously saved roles"""
+        await ctx.defer(ephemeral=True)
+
+        roles = await get_prop(ctx.author.id, "roles", "roles", None)
+
+        if roles is None:
+            await ctx.respond("No roles have been previously saved", ephemeral=True)
+            return
+
+        # Add roles
+        roles = [ctx.guild.get_role(roleid) for roleid in roles]
+        roles = [role for role in roles if role]  # Remove roles that no longer exist
+        await ctx.author.add_roles(*roles, reason="Restored")
+
+        # Send confirmation
+        em = discord.Embed(title="Roles restored", colour=MAIN,
+                           description=" ".join(role.mention for role in roles))
+        await ctx.respond(embed=em, ephemeral=True)
+
 
 
 def setup(bot):
