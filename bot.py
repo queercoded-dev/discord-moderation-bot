@@ -3,7 +3,7 @@ from discord.ext import commands
 import os
 from os import getenv
 from dotenv import load_dotenv
-from config import LOG_ID, PREFIX, OWNERS
+from config import LOG_ID, PREFIX, OWNERS, GUILD_ID
 
 load_dotenv()
 
