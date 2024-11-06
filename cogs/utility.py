@@ -71,11 +71,10 @@ class Utility(commands.Cog):
         Displays a quick message to explain plurality
         """
         embed = discord.Embed(colour=MAIN)
-        embed.set_footer(icon_url=ctx.author.avatar.url, text=f"Summoned by {ctx.author.display_name}")
 
-        embed.description = "This server has a system that allows people to communicate though a proxy.\nThis " \
-                            "benefits people who experience [plurality](https://morethanone.info/) .\n\nDue to the "\
-                            "way this system works, some messages may show up with a [BOT] however these messages " \
+        embed.description = "This server has a system that allows people to communicate through a proxy.\nThis " \
+                            "benefits people who experience [plurality](https://morethanone.info/).\n\nDue to the "\
+                            "way this system works, some messages may show up as an [APP]; however these messages " \
                             "are still sent by normal people and thus should be treated as such."
 
         await ctx.respond(embed=embed)
