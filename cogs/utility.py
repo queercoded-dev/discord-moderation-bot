@@ -74,10 +74,9 @@ class Utility(commands.Cog):
         embed.set_footer(icon_url=ctx.author.avatar.url, text=f"Summoned by {ctx.author.display_name}")
 
         embed.description = "This server has a system that allows people to communicate though a proxy.\nThis " \
-                            "benefits people who experience [plurality](https://morethanone.info/). In the serious " \
-                            "category channels, they can be used for anonymity.\n\nDue to the way this system works, " \
-                            "some messages may show up with a [BOT] however these messages are still sent by normal " \
-                            "people and thus should be treated as such."
+                            "benefits people who experience [plurality](https://morethanone.info/) .\n\nDue to the "\
+                            "way this system works, some messages may show up with a [BOT] however these messages " \
+                            "are still sent by normal people and thus should be treated as such."
 
         await ctx.respond(embed=embed)
 
